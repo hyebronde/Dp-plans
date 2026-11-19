@@ -404,6 +404,7 @@ function planSVG(sc, o) {
   let cones = '';
   const segs = occluders(p);
   for (const it of p.items) {
+    if (it.off) continue;
     if (it.cat === 'light' || (it.type === 'window' && it.sun)) {
       const c = it.type === 'window' ? kColor(it.k) : lightColor(it), dim = (it.dim ?? 100) / 100, r = +it.reach || 3;
       defs += `<radialGradient id="lg${it.id}" gradientUnits="userSpaceOnUse" cx="${it.x}" cy="${it.y}" r="${r}"><stop offset="0" stop-color="${c}" stop-opacity="${(.62 * dim).toFixed(2)}"/><stop offset=".55" stop-color="${c}" stop-opacity="${(.3 * dim).toFixed(2)}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`;
@@ -425,7 +426,12 @@ function planSVG(sc, o) {
   for (const it of p.items) {
     const def = LIBMAP[it.type]; if (!def) continue;
     const hitR = Math.max(itemR(it), 20 * px);
-    out += `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0}) scale(${it.s || 1})">${edit ? `<circle r="${hitR / (it.s || 1)}" fill="transparent"/>` : ''}${SHAPES[it.type](it)}</g>`;
+    let hit = '';
+    if (edit) {
+      if (FRAME_TYPES.includes(it.type)) { const [a, b2] = frameDims(it.size), tw = it.type === 'overhead' ? b2 : Math.max(.3, 28 * px); hit = `<rect x="${-tw / 2}" y="${-a / 2}" width="${tw}" height="${a}" fill="transparent"/>`; }
+      else hit = `<circle r="${hitR / (it.s || 1)}" fill="transparent"/>`;
+    }
+    out += `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0}) scale(${it.s || 1})">${hit}${SHAPES[it.type](it)}</g>`;
   }
   // drawings
   for (const d of p.draws) {
@@ -587,7 +593,9 @@ function layoutCalc() {
   const big = !book && w >= 1100;                                  // iPad landscape
   const fold = lap && h / w < 1.38;                                // true Duo laptop pose: split exactly at the fold
   const prev = c.value;
-  c.toggle('lay-book', book); c.toggle('lay-lap', lap || outer); c.toggle('lay-fold', fold); c.toggle('lay-outer', outer); c.toggle('lay-big', big);
+  const flt = !outer && (book || big || (lap && !fold) || (!lap && w > 820));
+  c.toggle('float-ui', flt);
+  c.toggle('lay-book', book); c.toggle('lay-lap', (lap || outer) && !flt); c.toggle('lay-fold', fold); c.toggle('lay-outer', outer); c.toggle('lay-big', big);
   const top = document.querySelector('.ed-top');
   if (top && top.offsetHeight) document.documentElement.style.setProperty('--topH', top.offsetHeight + 'px');
   return prev !== c.value;
@@ -595,7 +603,8 @@ function layoutCalc() {
 layoutCalc();
 let layT = null;
 addEventListener('resize', () => { clearTimeout(layT); layT = setTimeout(() => { if (layoutCalc() && S.scene) requestAnimationFrame(() => fitView()); }, 150); });
-const overlayPanel = () => innerWidth <= 820 && !document.documentElement.matches('.lay-lap');
+const isFloat = () => document.documentElement.classList.contains('float-ui');
+const overlayPanel = () => innerWidth <= 820 && !document.documentElement.matches('.lay-lap,.float-ui');
 
 // ---------- editor render ----------
 const svg = $('#plan'), stage = $('#stage');
@@ -612,12 +621,13 @@ function renderNow() {
   grid.x = Math.floor(grid.x); grid.y = Math.floor(grid.y);
   const activeCam = S.activeShot ? S.scene.shots.find(s => s.id === S.activeShot)?.cam : null;
   svg.innerHTML = `<g transform="translate(${x} ${y}) scale(${z})">${planSVG(S.scene, { edit: true, px: 1 / z, grid, labels: S.labels, activeCam })}</g>`;
+  placeQuick();
 }
 function fitView(sc = S.scene) {
   const W = stage.clientWidth, H = stage.clientHeight;
   if (!W || !H) return;
   const narrow = overlayPanel(), horizTools = document.documentElement.matches('.lay-lap');
-  const tw = $('#tools')?.offsetWidth || 50, padL = horizTools ? 20 : tw + 24, padB = narrow ? 70 : horizTools ? 76 : 20, padT = 56;
+  const tw = $('#tools')?.offsetWidth || 50, padL = horizTools ? 20 : tw + 24, padB = narrow ? 70 : horizTools ? 76 : isFloat() ? 70 : 20, padT = isFloat() ? Math.max(56, (panel.classList.contains('min') ? panel.getBoundingClientRect().bottom - stage.getBoundingClientRect().top : 0) + 16) : 56;
   if (!sc.plan._labels && S.labels) planSVG(sc, { px: .02, labels: true });
   const bb = sceneBBox(sc, .3);
   const z = clamp(Math.min((W - padL - 20) / bb.w, (H - padT - padB) / bb.h), 10, 400);
@@ -695,8 +705,10 @@ function fitTools() {
   const t = $('#tools'), root = document.documentElement;
   if (!t || !stage.clientHeight) return;
   t.classList.remove('two');
+  const setW = () => document.documentElement.style.setProperty('--toolsW', (t.offsetLeft + t.offsetWidth + 14) + 'px');
   if (root.matches('.lay-lap') || overlayPanel()) return;
   if (t.scrollHeight > stage.clientHeight - 20) t.classList.add('two');
+  setW();
 }
 new ResizeObserver(() => fitTools()).observe(document.querySelector('#stage'));
 $('#tools').addEventListener('click', e => {
@@ -777,8 +789,15 @@ function magnetItem(it) {
 function selectThing(sel) {
   const changed = JSON.stringify(sel) !== JSON.stringify(S.sel);
   S.sel = sel;
-  if (changed) { renderPanel(); if (sel) openPanel(); }
+  if (changed) {
+    S.qpos = null;
+    if (!sel) S.fullInspect = false;
+    if (sel && isFloat() && sel.t !== 'item') S.fullInspect = true;
+    renderPanel();
+    if (sel && (!isFloat() || S.fullInspect)) openPanel();
+  }
   render();
+  renderQuick();
 }
 svg.addEventListener('pointerdown', e => {
   if (e.button > 0) return;
@@ -989,14 +1008,135 @@ function duplicateSel() {
   P().items.push(n); save(); selectThing({ t: 'item', id: n.id });
 }
 
+
+// ---------- quick popover (iPad / Duo): small card next to the selected item, draggable ----------
+const ICQ = {
+  bulb: 'M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0012 3z',
+  cam: 'M3 10h11v9H3zM14 13l6-3v9l-6-3M4 6.5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0M9 6.5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0',
+  person: 'M12 11a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0', box: 'M4 4h16v16H4z',
+  gel: 'M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z', beam: 'M4 12l16-7v14z',
+  aim: 'M12 2v4M12 18v4M2 12h4M18 12h4M12 8a4 4 0 100 8 4 4 0 000-8z', more: 'M5 12h.01M12 12h.01M19 12h.01',
+  rot: 'M21 12a9 9 0 11-3-6.7M21 4v5h-5', dup: 'M8 8h12v12H8zM4 16V4h12', del: 'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',
+};
+const qbtn = (act, d, label, on) => `<button type="button" class="qb${on ? ' on' : ''}" data-qa="${act}" aria-label="${label}" title="${label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg></button>`;
+const QGELS = ['—', '¼ CTO', '½ CTO', 'Full CTO', '¼ CTB', '½ CTB', 'Full CTB', 'Deep Blue'];
+const QBEAMS = [15, 30, 45, 60, 90, 120];
+function renderQuick() {
+  const q = $('#qpop'), it = S.sel?.t === 'item' && isFloat() && !S.fullInspect ? findSel() : null;
+  if (!it) { q.hidden = true; return; }
+  const def = LIBMAP[it.type];
+  const head = (ico, color, title, sub, extra = '') => `<div class="qhead" data-qdrag><span class="qico" style="color:${color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ico}"/></svg></span><div class="qt"><b>${esc(title)}</b><small>${esc(sub)}</small></div>${extra}</div>`;
+  const tail = `<div class="qrow">${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}${qbtn('more', ICQ.more, 'รายละเอียดทั้งหมด')}</div>`;
+  let h = '';
+  if (it.cat === 'light') {
+    const kv = it.mode === 'rgb' ? 'RGB' : effK(it);
+    h = head(ICQ.bulb, lightColor(it), it.label || def.name, it.model || def.name, `<label class="qsw" title="เปิด / ปิด"><input type="checkbox" data-q="on"${it.off ? '' : ' checked'} aria-label="เปิดไฟ"><i></i></label>`)
+      + `<div class="qbig"><span data-qo="k">${kv}</span>${it.mode === 'rgb' ? '' : '<small>K</small>'}<span class="sp"></span><em data-qo="dim">${it.dim ?? 100}%</em></div>`
+      + (it.mode === 'bicolor' ? `<input class="qk" type="range" min="2700" max="6500" step="100" value="${it.k}" data-q="k" aria-label="อุณหภูมิสี">` : it.mode === 'rgb' ? `<input class="qcol" type="color" value="${it.color || '#ff7a1a'}" data-q="color" aria-label="สี">` : '')
+      + `<input class="qd" type="range" min="0" max="100" value="${it.dim ?? 100}" data-q="dim" aria-label="Dimmer">`
+      + `<div class="qrow">${qbtn('gel', ICQ.gel, 'เจล: ' + (it.gel || '—'), it.gel && it.gel !== '—')}${it.beam < 359 ? qbtn('beam', ICQ.beam, 'มุมลำแสง ' + it.beam + '°') : ''}${qbtn('aim', ICQ.aim, it.aim ? 'เลิกเล็ง' : 'เล็งไปที่คนใกล้สุด', !!it.aim)}${qbtn('more', ICQ.more, 'รายละเอียดทั้งหมด')}</div>`
+      + `<div class="qrow">${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}</div>`;
+  } else if (it.type === 'camera') {
+    h = head(ICQ.cam, it.color, it.label || 'Cam', it.body || 'กล้อง', `<span class="qfov">FOV ${hfov(it).toFixed(0)}°</span>`)
+      + `<div class="qchips">${[18, 24, 35, 50, 85, 135].map(l => `<button type="button" data-ql="${l}" class="${+it.lens === l ? 'on' : ''}">${l}</button>`).join('')}</div>`
+      + `<div class="qrow">${qbtn('aim', ICQ.aim, it.aim ? 'เลิกเล็ง' : 'เล็งไปที่คนใกล้สุด', !!it.aim)}${qbtn('shot', 'M12 5v14M5 12h14', 'เพิ่มช็อตจากกล้องนี้')}${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('more', ICQ.more, 'รายละเอียดทั้งหมด')}</div>`
+      + `<div class="qrow">${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}</div>`;
+  } else if (it.cat === 'person') {
+    h = head(ICQ.person, it.color === '#FFFFFF' ? '#2B2B2E' : it.color, it.label || 'คน', def.name)
+      + `<div class="swgrid">${PERSON_COLORS.map(c => `<button type="button" data-qc="${c}" class="${c === it.color ? 'on' : ''}" style="background:${c}" aria-label="สี ${c}"></button>`).join('')}</div>` + tail;
+  } else if (FRAME_TYPES.includes(it.type)) {
+    h = head(ICQ.box, FABRIC_STYLE[fabricCat(it.fabric)][2], it.size + ' · ' + it.fabric, def.name)
+      + `<div class="qchips">${['4×4', '6×6', '8×8', '12×12', '20×20'].map(z => `<button type="button" data-qs="${z}" class="${it.size === z ? 'on' : ''}">${z}</button>`).join('')}</div>` + tail;
+  } else {
+    h = head(ICQ.box, '#2B2B2E', itemName(it), def.name) + tail;
+  }
+  q.innerHTML = h;
+  q.hidden = false;
+  let snapped = false;
+  const once = () => { if (!snapped) { snap(); snapped = true; } };
+  $$('[data-q]', q).forEach(el => {
+    el.addEventListener('pointerdown', once);
+    el.addEventListener('change', () => { snapped = false; });
+    el.addEventListener('input', () => {
+      once();
+      const k = el.dataset.q;
+      if (k === 'on') it.off = !el.checked; else if (k === 'color') it.color = el.value; else it[k] = +el.value;
+      const ok = $('[data-qo="k"]', q); if (ok && it.mode !== 'rgb') ok.textContent = effK(it);
+      const od = $('[data-qo="dim"]', q); if (od) od.textContent = (it.dim ?? 100) + '%';
+      $('.qico', q).style.color = lightColor(it);
+      save(); render();
+    });
+  });
+  $$('[data-ql]', q).forEach(b => b.onclick = () => { snap(); it.lens = +b.dataset.ql; save(); render(); renderQuick(); });
+  $$('[data-qc]', q).forEach(b => b.onclick = () => { snap(); it.color = b.dataset.qc; save(); render(); renderQuick(); });
+  $$('[data-qs]', q).forEach(b => b.onclick = () => { snap(); it.size = b.dataset.qs; save(); render(); renderQuick(); });
+  $$('[data-qa]', q).forEach(b => b.onclick = () => {
+    const a = b.dataset.qa;
+    if (a === 'del') return deleteSel();
+    if (a === 'dup') return duplicateSel();
+    if (a === 'more') { S.fullInspect = true; renderQuick(); renderPanel(); openPanel(); return; }
+    if (a === 'shot') return addShot(it.id);
+    snap();
+    if (a === 'rot') { it.rot = normDeg((it.rot || 0) + 90); delete it.aim; }
+    if (a === 'gel') { it.gel = QGELS[(QGELS.indexOf(it.gel || '—') + 1) % QGELS.length]; toast('เจล: ' + it.gel); }
+    if (a === 'beam') { const i = QBEAMS.findIndex(v => v >= it.beam); it.beam = QBEAMS[(i + 1) % QBEAMS.length]; toast('มุมลำแสง ' + it.beam + '°'); }
+    if (a === 'aim') {
+      if (it.aim) delete it.aim;
+      else { const ps = P().items.filter(x => x.cat === 'person'); const t = ps.sort((p1, p2) => Math.hypot(p1.x - it.x, p1.y - it.y) - Math.hypot(p2.x - it.x, p2.y - it.y))[0]; if (t) { it.aim = t.id; toast('เล็งไปที่ ' + itemName(t)); } else toast('ยังไม่มีคนบนแปลน'); }
+    }
+    save(); render(); renderQuick();
+  });
+  placeQuick();
+}
+function placeQuick() {
+  const q = $('#qpop'); if (!q || q.hidden) return;
+  const it = findSel(); if (!it) { q.hidden = true; return; }
+  const W = stage.clientWidth, H = stage.clientHeight, w = q.offsetWidth, h = q.offsetHeight;
+  let x, y;
+  if (S.qpos) [x, y] = S.qpos;
+  else {
+    const sx = S.view.x + it.x * S.view.z, sy = S.view.y + it.y * S.view.z, gap = itemR(it) * S.view.z + 26;
+    x = sx + gap + w < W - 10 ? sx + gap : sx - gap - w;
+    y = sy - h / 2;
+  }
+  if (!S.qpos && !panel.classList.contains('min')) {
+    // keep clear of the open floating panel
+    const pr = panel.getBoundingClientRect(), sr = stage.getBoundingClientRect(), pl = pr.left - sr.left, pt = pr.top - sr.top, pb = pr.bottom - sr.top;
+    if (x + w > pl - 10 && y < pb && y + h > pt) x = pl - w - 14;
+  }
+  q.style.left = clamp(x, 10, Math.max(10, W - w - 10)) + 'px';
+  q.style.top = clamp(y, 10, Math.max(10, H - h - (isFloat() ? 70 : 10))) + 'px';
+}
+// drag a floating window by its handle
+function dragBy(el, handleSel, store) {
+  el.addEventListener('pointerdown', e => {
+    const hnd = e.target.closest(handleSel); if (!hnd || e.target.closest('button,input,label')) return;
+    e.preventDefault();
+    const r = el.getBoundingClientRect(), pr = el.offsetParent?.getBoundingClientRect() || { left: 0, top: 0 }, ox = e.clientX - r.left, oy = e.clientY - r.top;
+    hnd.setPointerCapture(e.pointerId);
+    const mv = ev => { const x = ev.clientX - ox - pr.left, y = ev.clientY - oy - pr.top; store([x, y]); };
+    const up = () => { hnd.removeEventListener('pointermove', mv); hnd.removeEventListener('pointerup', up); hnd.removeEventListener('pointercancel', up); };
+    hnd.addEventListener('pointermove', mv); hnd.addEventListener('pointerup', up); hnd.addEventListener('pointercancel', up);
+  });
+}
+dragBy($('#qpop'), '[data-qdrag]', p => { S.qpos = p; placeQuick(); });
+dragBy($('#panel'), '.grab', ([x, y]) => {
+  if (!isFloat()) return;
+  const w = panel.offsetWidth, h = panel.offsetHeight;
+  S.ppos = [clamp(x, 8, innerWidth - w - 8), clamp(y, 8, innerHeight - Math.min(h, 120))];
+  panel.style.left = S.ppos[0] + 'px'; panel.style.top = S.ppos[1] + 'px'; panel.style.right = 'auto';
+});
+
 // ---------- panel ----------
 const panel = $('#panel'), pbody = $('.pbody');
 function openPanel() { panel.classList.remove('min'); }
 $('.ptabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
   if (!b) { panel.classList.toggle('min'); return; }
-  if (overlayPanel() && S.tab === b.dataset.tab && !S.sel && !panel.classList.contains('min')) { panel.classList.add('min'); return; }
-  S.tab = b.dataset.tab; S.sel = null; openPanel(); renderPanel(); render();
+  if ((overlayPanel() || isFloat()) && S.tab === b.dataset.tab && !(S.sel && S.fullInspect) && !panel.classList.contains('min')) { panel.classList.add('min'); return; }
+  S.tab = b.dataset.tab;
+  if (isFloat()) S.fullInspect = false; else S.sel = null;
+  openPanel(); renderPanel(); render(); renderQuick();
 });
 function fieldHTML(f, v) {
   const u = f.unit ? ` ${f.unit}` : '';
@@ -1046,7 +1186,7 @@ function renderPanel() {
   if (!S.scene) return;
   $$('.ptabs [data-tab]').forEach(b => b.classList.toggle('on', !S.sel && b.dataset.tab === S.tab));
   const s = findSel();
-  if (s) return renderInspector(s);
+  if (s && (!isFloat() || S.fullInspect)) return renderInspector(s);
   if (S.tab === 'shots') return renderShots();
   if (S.tab === 'lights') return renderLights();
   if (S.tab === 'refs') return renderRefs();
@@ -1153,7 +1293,7 @@ function renderInspector(s) {
   $$('[data-act]', pbody).forEach(b => b.onclick = () => {
     const a = b.dataset.act;
     if (a === 'del') deleteSel();
-    else if (a === 'done') selectThing(null);
+    else if (a === 'done') { if (isFloat() && S.sel?.t === 'item') { S.fullInspect = false; panel.classList.add('min'); renderPanel(); renderQuick(); } else selectThing(null); }
     else if (a === 'dup') duplicateSel();
     else if (a === 'rot90') { snap(); s.rot = normDeg((s.rot || 0) + 90); save(); render(); renderPanel(); }
     else if (a === 'addshot') addShot(s.id);
@@ -1532,8 +1672,9 @@ function openProject(p) {
   $('#home').hidden = true; $('#editor').hidden = false;
   S.tool = 'select'; renderTools();
   switchScene(p.scenes[0]);
-  if (!overlayPanel()) openPanel();
   layoutCalc();
+  if (!overlayPanel() && !isFloat()) openPanel();
+  if (isFloat()) panel.classList.add('min');
 }
 function gcPhotos(p) {
   const used = new Set();
