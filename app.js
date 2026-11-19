@@ -12,10 +12,10 @@ const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
 const normDeg = d => ((d % 360) + 360) % 360;
 const clone = o => JSON.parse(JSON.stringify(o));
 const FONT = `Anuphan, 'IBM Plex Sans Thai', Thonburi, 'Noto Sans Thai', system-ui, sans-serif`;
-const PAPER = '#F6F3EC', INK = '#2B2B2E', SETF = '#ebe7df', SETS = '#4a4a50';
+const PAPER = '#F1F2F4', INK = '#2B2B2E', SETF = '#ebe7df', SETS = '#4a4a50';
 const CAM_COLORS = ['#e5484d', '#2f7cf6', '#30a46c', '#8e4ec6', '#f76b15', '#0894b3'];
 const PEN_COLORS = ['#e5484d', '#2f7cf6', '#1c1c1f', '#f5a524', '#30a46c'];
-const PERSON_COLORS = ['#f5a524', '#e5484d', '#2f7cf6', '#30a46c', '#8e4ec6', '#8b8d98'];
+const PERSON_COLORS = ['#FF7A1A', '#2F6BFF', '#2B2B2E', '#FFFFFF', '#F5C400', '#22B07D', '#E5484D', '#8E6BE8', '#00A3C4', '#FF5FA2', '#8B5E3C', '#7A8B99'];
 const SENSORS = { ff: ['Full Frame', 36], s35: ['Super 35', 24.9], apsc: ['APS-C', 23.5], mft: ['Micro 4/3', 17.3], phone: ['มือถือ (ระยะเทียบ FF)', 36] };
 const SHOT_SIZES = ['EWS', 'WS', 'FS', 'MS', 'MCU', 'CU', 'ECU', 'OTS', 'POV', '2-Shot', 'Insert'];
 const ANGLES = ['ระดับสายตา', 'มุมสูง', 'มุมต่ำ', 'Top shot', 'Dutch'];
@@ -44,12 +44,14 @@ const SHAPES = {
   panel: () => `<rect x="-.06" y="-.3" width=".11" height=".6" rx=".02" fill="${INK}"/><rect x=".05" y="-.28" width=".035" height=".56" fill="#ffe7a8"/>`,
   tube: () => `<rect x="-.035" y="-.6" width=".07" height="1.2" rx=".035" fill="#fff" stroke="${INK}" stroke-width=".02"/>`,
   practical: () => `<circle r=".2" fill="#fff6d6" stroke="${INK}" stroke-width=".03"/><circle r=".07" fill="#f5a524"/>`,
-  camera: it => `<rect x="-.24" y="-.13" width=".32" height=".26" rx=".04" fill="${it.color || CAM_COLORS[0]}"/><rect x=".08" y="-.08" width=".18" height=".16" rx=".02" fill="${INK}"/><rect x="-.32" y="-.06" width=".08" height=".12" fill="${INK}"/>`,
+  camera: it => { const c = it.color || CAM_COLORS[0]; return `<circle cx="-.13" cy="-.2" r=".1" fill="#fff" stroke="${c}" stroke-width=".04"/><circle cx=".05" cy="-.2" r=".1" fill="#fff" stroke="${c}" stroke-width=".04"/><rect x="-.26" y="-.11" width=".34" height=".24" rx=".05" fill="${c}"/><path d="M.08-.06L.28-.15V.17L.08.08z" fill="${c}"/><circle cx="-.09" cy=".01" r=".04" fill="#fff" fill-opacity=".7"/>`; },
   monitor: () => `<rect x="-.05" y="-.26" width=".1" height=".52" rx=".02" fill="${INK}"/><rect x=".05" y="-.23" width=".02" height=".46" fill="#7fb8ff"/><circle cx="-.18" r=".06" fill="${INK}"/>`,
-  talent: it => `<ellipse rx=".17" ry=".32" fill="${it.color || '#f5a524'}" opacity=".35"/><circle r=".2" fill="${it.color || '#f5a524'}" stroke="#fff" stroke-width=".03"/><path d="M.18-.09L.34 0L.18.09z" fill="${it.color || '#f5a524'}"/>`,
+  talent: it => { const c = it.color || '#FF7A1A', light = /^#f{6}$/i.test(c); return `<ellipse rx=".17" ry=".32" fill="${c}" opacity=".35"/><circle r=".2" fill="${c}" stroke="${light ? '#2B2B2E' : '#fff'}" stroke-width="${light ? .02 : .03}"/><path d="M.18-.09L.34 0L.18.09z" fill="${light ? '#2B2B2E' : c}"/>`; },
   crew: it => SHAPES.talent({ color: it.color || '#8b8d98' }),
   softpanel: () => `<rect x="-.1" y="-.62" width=".14" height="1.24" rx=".03" fill="${INK}"/><rect x=".04" y="-.58" width=".04" height="1.16" fill="#eef2ff"/>`,
   mat: () => `<rect x="-.03" y="-.6" width=".06" height="1.2" rx=".02" fill="#fff" stroke="${INK}" stroke-width=".02"/><path d="M-.03-.3H.03M-.03 0H.03M-.03.3H.03" stroke="${INK}" stroke-width=".01"/>`,
+  pocket: () => `<rect x="-.05" y="-.13" width=".09" height=".26" rx=".03" fill="${INK}"/><rect x=".04" y="-.11" width=".025" height=".22" fill="#ffe7a8"/>`,
+  bulb: () => `<circle r=".12" fill="#fff6d6" stroke="${INK}" stroke-width=".025"/><circle r=".05" fill="#FF7A1A"/>`,
   balloon: () => `<circle r=".6" fill="#fff" fill-opacity=".85" stroke="${INK}" stroke-width=".025" stroke-dasharray=".08 .05"/><circle r=".12" fill="${INK}"/>`,
   spacelight: () => `<circle r=".36" fill="#fff" stroke="${INK}" stroke-width=".03"/><circle r=".24" fill="none" stroke="${INK}" stroke-width=".015" stroke-dasharray=".04 .03"/><circle r=".06" fill="${INK}"/>`,
   reflector: () => `<rect x="-.03" y="-.5" width=".06" height="1" rx=".02" fill="#fff" stroke="#8a8a90" stroke-width=".025"/><rect x=".03" y="-.48" width=".02" height=".96" fill="#d9d9de"/>`,
@@ -57,8 +59,8 @@ const SHAPES = {
   neg: it => frameShape(it), net: it => frameShape(it), overhead: it => frameShape(it),
   hazer: () => `<circle r=".75" fill="#c9c6c0" fill-opacity=".18" stroke="#8a8780" stroke-width=".015" stroke-dasharray=".06 .05"/><rect x="-.18" y="-.12" width=".3" height=".24" rx=".04" fill="${INK}"/><path d="M.12-.05h.12M.12.05h.12" stroke="${INK}" stroke-width=".03"/>`,
   cstand: () => `<path d="M0 0L.3 0M0 0L-.15.26M0 0L-.15-.26" stroke="${INK}" stroke-width=".035" stroke-linecap="round"/><circle r=".05" fill="${INK}"/>`,
-  door: () => `<rect x="-.09" y="-.45" width=".18" height=".9" fill="${PAPER}"/><rect x="0" y="-.47" width=".9" height=".04" fill="${SETS}"/><path d="M.9-.45A.9.9 0 0 1 0 .45" fill="none" stroke="${SETS}" stroke-width=".015" stroke-dasharray=".05 .04"/><path d="M0-.45V.45" stroke="${SETS}" stroke-width=".02"/>`,
-  window: () => `<rect x="-.09" y="-.6" width=".18" height="1.2" fill="${PAPER}"/><rect x="-.07" y="-.6" width=".14" height="1.2" fill="#dcecff" ${st(.02)}/><path d="M0-.6V.6" stroke="${SETS}" stroke-width=".015"/>`,
+  door: () => `<rect x="-.06" y="-.45" width=".12" height=".9" fill="${PAPER}"/><path d="M-.05-.45h.1M-.05.45h.1" stroke="${INK}" stroke-width=".03"/><rect x="0" y="-.47" width=".9" height=".04" fill="${SETS}"/><path d="M.9-.45A.9.9 0 0 1 0 .45" fill="none" stroke="${SETS}" stroke-width=".015" stroke-dasharray=".05 .04"/><path d="M0-.45V.45" stroke="${SETS}" stroke-width=".02"/>`,
+  window: () => `<rect x="-.06" y="-.6" width=".12" height="1.2" fill="${PAPER}"/><path d="M-.025-.6V.6M.025-.6V.6" stroke="#2F6BFF" stroke-width=".018"/><path d="M-.05-.6h.1M-.05.6h.1" stroke="${INK}" stroke-width=".03"/>`,
   chair: () => `<rect x="-.22" y="-.22" width=".44" height=".44" rx=".06" fill="${SETF}" ${st()}/><rect x="-.27" y="-.22" width=".09" height=".44" rx=".03" fill="${SETS}"/>`,
   armchair: () => `<rect x="-.4" y="-.4" width=".8" height=".8" rx=".1" fill="${SETF}" ${st()}/><rect x="-.4" y="-.4" width=".2" height=".8" rx=".06" fill="#d4cfc4" ${st()}/><rect x="-.3" y="-.4" width=".7" height=".14" rx=".05" fill="#d4cfc4" ${st()}/><rect x="-.3" y=".26" width=".7" height=".14" rx=".05" fill="#d4cfc4" ${st()}/>`,
   sofa: () => `<rect x="-.45" y="-1" width=".9" height="2" rx=".1" fill="${SETF}" ${st()}/><rect x="-.45" y="-1" width=".22" height="2" rx=".07" fill="#d4cfc4" ${st()}/><rect x="-.25" y="-1" width=".7" height=".18" rx=".06" fill="#d4cfc4" ${st()}/><rect x="-.25" y=".82" width=".7" height=".18" rx=".06" fill="#d4cfc4" ${st()}/><path d="M-.23 0H.45" ${st(.015)}/>`,
@@ -88,6 +90,8 @@ const LIB = [
   { cat: 'light', type: 'softpanel', name: 'Soft panel (แบบ SkyPanel)', r: .64, d: { beam: 110, reach: 5, watt: 450, mode: 'bicolor', k: 5600, dim: 100, mod: '—' } },
   { cat: 'light', type: 'mat', name: 'Flex mat (แผ่นไฟอ่อน)', r: .62, d: { beam: 120, reach: 3, watt: 200, mode: 'bicolor', k: 3200, dim: 100, mod: 'Softbox' } },
   { cat: 'light', type: 'spacelight', name: 'Space light / China ball', r: .38, d: { beam: 360, reach: 3.5, watt: 300, mode: 'bicolor', k: 3200, dim: 100, mod: 'Lantern' } },
+  { cat: 'light', type: 'pocket', name: 'ไฟจิ๋ว / Pocket LED', r: .16, d: { beam: 100, reach: 1.8, watt: 10, mode: 'rgb', k: 4300, color: '#FF7A1A', dim: 100, mod: '—' } },
+  { cat: 'light', type: 'bulb', name: 'หลอด RGB / Bulb', r: .14, d: { beam: 360, reach: 1.4, watt: 7, mode: 'rgb', k: 2700, color: '#FFB067', dim: 100, mod: '—' } },
   { cat: 'light', type: 'balloon', name: 'Balloon light', r: .62, d: { beam: 360, reach: 9, watt: 2000, mode: 'bicolor', k: 4300, dim: 100, mod: '—' } },
   { cat: 'grip', type: 'diffusion', name: 'Diffusion frame', r: .62, d: { size: '8×8', fabric: '¼ Grid' } },
   { cat: 'grip', type: 'overhead', name: 'Butterfly / Overhead (แนวนอน)', r: 1.9, d: { size: '12×12', fabric: 'Full Silk' } },
@@ -145,33 +149,52 @@ function effK(it) {
   const g = GELS.find(x => x[0] === it.gel);
   return g && g[1] ? Math.round(1e6 / (1e6 / base + g[1]) / 50) * 50 : base;
 }
-// Brand presets by production size: researched lineups (verify specs before a real job)
+// Brand presets by production size. Wattages are approximate (power draw / class) - verify specs before a real job.
 const PRESETS = [
-  ['small', 'Aputure amaran', '100x S', 'cob', 100, 'bicolor'], ['small', 'Aputure amaran', '200x S', 'cob', 200, 'bicolor'],
-  ['small', 'Aputure amaran', '300c', 'cob', 300, 'rgb'], ['small', 'Aputure amaran', 'PT4c', 'tube', 50, 'rgb'],
-  ['small', 'Aputure amaran', 'F21c (mat)', 'mat', 100, 'rgb'], ['small', 'SmallRig', 'RC 60B', 'cob', 60, 'bicolor'],
-  ['small', 'SmallRig', 'RC 120B', 'cob', 120, 'bicolor'], ['small', 'SmallRig', 'RC 220B', 'cob', 220, 'bicolor'],
-  ['small', 'SmallRig', 'RC 450B', 'cob', 450, 'bicolor'], ['small', 'SmallRig', 'RM120 (panel)', 'panel', 12, 'rgb'],
-  ['small', 'Godox', 'SL60IIBi', 'cob', 60, 'bicolor'], ['small', 'Godox', 'UL150 II', 'cob', 150, 'daylight'],
-  ['small', 'Godox', 'TL60 (tube)', 'tube', 20, 'rgb'], ['small', 'Nanlite', 'Forza 60B II', 'fresnel', 60, 'bicolor'],
-  ['small', 'Nanlite', 'PavoTube II 30X', 'tube', 36, 'rgb'], ['small', 'Nanlite', 'FS-200B', 'cob', 200, 'bicolor'],
-  ['mid', 'Aputure', 'LS 600d Pro', 'cob', 600, 'daylight'], ['mid', 'Aputure', 'LS 600c Pro II', 'cob', 600, 'rgb'],
-  ['mid', 'Aputure', 'STORM 1200x', 'cob', 1200, 'bicolor'], ['mid', 'Aputure', 'STORM 1000c', 'cob', 1000, 'rgb'],
-  ['mid', 'Aputure', 'Nova P600c', 'softpanel', 600, 'rgb'], ['mid', 'Aputure', 'INFINIBAR PB12', 'tube', 100, 'rgb'],
-  ['mid', 'Nanlite', 'Forza 500B II', 'fresnel', 500, 'bicolor'], ['mid', 'Nanlite', 'FC-720B', 'cob', 750, 'bicolor'],
-  ['mid', 'Nanlux', 'Evoke 600C', 'cob', 600, 'rgb'], ['mid', 'Nanlux', 'Evoke 150C', 'fresnel', 150, 'rgb'],
-  ['mid', 'Astera', 'Titan Tube', 'tube', 72, 'rgb'], ['mid', 'Astera', 'Helios Tube', 'tube', 36, 'rgb'],
-  ['mid', 'Quasar Science', 'Double Rainbow 4ft', 'tube', 100, 'rgb'], ['mid', 'Litepanels', 'Gemini 2×1', 'softpanel', 350, 'rgb'],
-  ['big', 'ARRI', 'SkyPanel S60-C', 'softpanel', 450, 'rgb'], ['big', 'ARRI', 'SkyPanel S360-C', 'softpanel', 1500, 'rgb'],
-  ['big', 'ARRI', 'SkyPanel X', 'softpanel', 1600, 'rgb'], ['big', 'ARRI', 'Orbiter', 'fresnel', 500, 'rgb'],
-  ['big', 'ARRI', 'L10-C', 'fresnel', 510, 'rgb'], ['big', 'ARRI', 'M18 HMI', 'hmi', 1800, 'daylight'],
-  ['big', 'ARRI', 'M40 HMI', 'hmi', 4000, 'daylight'], ['big', 'ARRI', 'M90 HMI', 'hmi', 9000, 'daylight'],
-  ['big', 'ARRI', 'ARRIMAX 18/12', 'hmi', 18000, 'daylight'], ['big', 'Aputure', 'Electro Storm XT26', 'fresnel', 2600, 'bicolor'],
-  ['big', 'Aputure', 'Electro Storm CS15', 'fresnel', 1500, 'rgb'], ['big', 'Creamsource', 'Vortex24', 'softpanel', 1300, 'rgb'],
-  ['big', 'Kino Flo', 'FreeStyle 41', 'tube', 200, 'rgb'], ['big', 'Mole-Richardson', '10K Tener', 'fresnel', 10000, 'tungsten'],
-  ['big', 'Mole-Richardson', 'Molebeam 10K', 'par', 10000, 'tungsten'], ['big', 'Airstar', 'Balloon 4K', 'balloon', 4000, 'bicolor'],
-].map(([scale, brand, model, type, watt, mode], i) => ({ id: 'p' + i, scale, brand, model, type, watt, mode: mode === 'tungsten' ? 'bicolor' : mode, k: mode === 'tungsten' ? 3200 : mode === 'daylight' ? 5600 : LIBMAP[type].d.k }));
-const SCALES = [['small', 'เล็ก · Creator'], ['mid', 'กลาง · โฆษณา'], ['big', 'ใหญ่ · Studio']];
+  // จิ๋ว · พกพา (pocket, on-camera, tiny tubes and bulbs)
+  ['mini', 'Ulanzi', 'VL49', 'pocket', 5, 'bicolor'], ['mini', 'Ulanzi', 'VL49 RGB', 'pocket', 5, 'rgb'], ['mini', 'Ulanzi', 'VL120', 'pocket', 9, 'bicolor'], ['mini', 'Ulanzi', 'VL200', 'pocket', 10, 'bicolor'],
+  ['mini', 'Aputure', 'MC', 'pocket', 5, 'rgb'], ['mini', 'Aputure', 'MC Pro', 'pocket', 8, 'rgb'], ['mini', 'Aputure', 'MT Pro (tube 1ft)', 'tube', 7, 'rgb', { s: .3 }], ['mini', 'Aputure', 'Accent B7c (bulb)', 'bulb', 7, 'rgb'],
+  ['mini', 'Aputure amaran', 'Ace 25c', 'pocket', 25, 'rgb'], ['mini', 'Aputure amaran', 'PT1c (tube 1ft)', 'tube', 10, 'rgb', { s: .3 }], ['mini', 'Aputure amaran', 'PT2c (tube 2ft)', 'tube', 20, 'rgb', { s: .5 }],
+  ['mini', 'Godox', 'R1 (round mini)', 'pocket', 5, 'rgb'], ['mini', 'Godox', 'M1 (mini RGB)', 'pocket', 8, 'rgb'], ['mini', 'Godox', 'ML30Bi', 'fresnel', 30, 'bicolor'], ['mini', 'Godox', 'TL30 (tube)', 'tube', 10, 'rgb', { s: .5 }], ['mini', 'Godox', 'LC30Bi (Litemons)', 'pocket', 30, 'bicolor'],
+  ['mini', 'Zhiyun', 'Fiveray M20', 'pocket', 20, 'bicolor'], ['mini', 'Zhiyun', 'Fiveray M40', 'pocket', 40, 'bicolor'], ['mini', 'Zhiyun', 'Fiveray F100 (stick)', 'tube', 100, 'rgb', { s: .6 }],
+  ['mini', 'SmallRig', 'RM75', 'pocket', 7, 'rgb'], ['mini', 'SmallRig', 'RC 30B', 'fresnel', 30, 'bicolor'],
+  ['mini', 'Nanlite', 'Litolite 5C', 'pocket', 5, 'rgb'], ['mini', 'Nanlite', 'PavoTube II 6C', 'tube', 7, 'rgb', { s: .3 }], ['mini', 'Nanlite', 'PavoBulb 10C', 'bulb', 10, 'rgb'],
+  ['mini', 'Astera', 'NYX Bulb', 'bulb', 10, 'rgb'], ['mini', 'Astera', 'PixelBrick', 'pocket', 15, 'rgb'], ['mini', 'Rotolight', 'NEO 3', 'pocket', 15, 'rgb'],
+  ['mini', 'Lume Cube', 'Panel Mini', 'pocket', 5, 'bicolor'], 
+  // เล็ก · Creator
+  ['small', 'Aputure amaran', '60x S', 'cob', 60, 'bicolor'], ['small', 'Aputure amaran', '100x S', 'cob', 100, 'bicolor'], ['small', 'Aputure amaran', '200x S', 'cob', 200, 'bicolor'],
+  ['small', 'Aputure amaran', '150c', 'cob', 150, 'rgb'], ['small', 'Aputure amaran', '300c', 'cob', 300, 'rgb'], ['small', 'Aputure amaran', 'PT4c', 'tube', 50, 'rgb'], ['small', 'Aputure amaran', 'F21c (mat)', 'mat', 100, 'rgb'], ['small', 'Aputure amaran', 'F22c (mat)', 'mat', 200, 'rgb'],
+  ['small', 'SmallRig', 'RC 60B', 'cob', 60, 'bicolor'], ['small', 'SmallRig', 'RC 120B', 'cob', 120, 'bicolor'], ['small', 'SmallRig', 'RC 220B', 'cob', 220, 'bicolor'], ['small', 'SmallRig', 'RC 350B', 'cob', 350, 'bicolor'], ['small', 'SmallRig', 'RC 450B', 'cob', 450, 'bicolor'], ['small', 'SmallRig', 'RM120 (panel)', 'panel', 12, 'rgb'],
+  ['small', 'Godox', 'ML60IIBi', 'fresnel', 60, 'bicolor'], ['small', 'Godox', 'SL60IIBi', 'cob', 60, 'bicolor'], ['small', 'Godox', 'UL150 II', 'cob', 150, 'daylight'], ['small', 'Godox', 'SL150 III', 'cob', 150, 'daylight'], ['small', 'Godox', 'TL60 (tube)', 'tube', 20, 'rgb'],
+  ['small', 'Nanlite', 'Forza 60B II', 'fresnel', 60, 'bicolor'], ['small', 'Nanlite', 'FS-150B', 'cob', 150, 'bicolor'], ['small', 'Nanlite', 'FS-200B', 'cob', 200, 'bicolor'], ['small', 'Nanlite', 'PavoTube II 15X', 'tube', 18, 'rgb', { s: .5 }], ['small', 'Nanlite', 'PavoTube II 30X', 'tube', 36, 'rgb'],
+  ['small', 'Zhiyun', 'Molus X100', 'cob', 100, 'bicolor'], ['small', 'Zhiyun', 'Molus G200', 'cob', 200, 'bicolor'], ['small', 'Zhiyun', 'Molus G300', 'cob', 300, 'bicolor'],
+  ['small', 'Neewer', 'CB60', 'cob', 70, 'bicolor'], ['small', 'Neewer', 'RGB660 PRO (panel)', 'panel', 50, 'rgb'],
+  // กลาง · โฆษณา
+  ['mid', 'Aputure', 'LS 300d II', 'cob', 300, 'daylight'], ['mid', 'Aputure', 'LS 600d Pro', 'cob', 600, 'daylight'], ['mid', 'Aputure', 'LS 600x Pro', 'cob', 600, 'bicolor'], ['mid', 'Aputure', 'LS 600c Pro II', 'cob', 600, 'rgb'],
+  ['mid', 'Aputure', 'LS 1200d Pro', 'cob', 1200, 'daylight'], ['mid', 'Aputure', 'STORM 1200x', 'cob', 1200, 'bicolor'], ['mid', 'Aputure', 'STORM 1000c', 'cob', 1000, 'rgb'],
+  ['mid', 'Aputure', 'Nova P300c', 'softpanel', 300, 'rgb'], ['mid', 'Aputure', 'Nova P600c', 'softpanel', 600, 'rgb'], ['mid', 'Aputure', 'INFINIBAR PB6', 'tube', 50, 'rgb', { s: .5 }], ['mid', 'Aputure', 'INFINIBAR PB12', 'tube', 100, 'rgb'],
+  ['mid', 'Nanlite', 'Forza 300B II', 'fresnel', 300, 'bicolor'], ['mid', 'Nanlite', 'Forza 500B II', 'fresnel', 500, 'bicolor'], ['mid', 'Nanlite', 'Forza 720B', 'fresnel', 720, 'bicolor'], ['mid', 'Nanlite', 'FC-720B', 'cob', 750, 'bicolor'], ['mid', 'Nanlite', 'FC-720C', 'cob', 750, 'rgb'],
+  ['mid', 'Nanlux', 'Evoke 150C', 'fresnel', 150, 'rgb'], ['mid', 'Nanlux', 'Evoke 600C', 'cob', 600, 'rgb'], ['mid', 'Nanlux', 'Evoke 900C', 'cob', 900, 'rgb'],
+  ['mid', 'Godox Knowled', 'M600Bi', 'cob', 600, 'bicolor'], ['mid', 'Godox Knowled', 'F600Bi (flex)', 'mat', 600, 'bicolor'], ['mid', 'Godox Knowled', 'P600Bi (panel)', 'softpanel', 600, 'bicolor'],
+  ['mid', 'Astera', 'Titan Tube', 'tube', 72, 'rgb'], ['mid', 'Astera', 'Helios Tube', 'tube', 36, 'rgb', { s: .5 }], ['mid', 'Astera', 'Hyperion Tube', 'tube', 100, 'rgb'],
+  ['mid', 'Quasar Science', 'Rainbow 2 (4ft)', 'tube', 50, 'rgb'], ['mid', 'Quasar Science', 'Double Rainbow 4ft', 'tube', 100, 'rgb'],
+  ['mid', 'Litepanels', 'Gemini 2×1 Soft', 'softpanel', 350, 'rgb'], ['mid', 'Litepanels', 'Gemini 2×1 Hard', 'fresnel', 350, 'rgb'], ['mid', 'Rotolight', 'AEOS 2', 'panel', 100, 'rgb'], ['mid', 'Rotolight', 'Titan X2', 'softpanel', 500, 'rgb'],
+  ['mid', 'DMG Lumière', 'SL1 Mix', 'softpanel', 200, 'rgb'], ['mid', 'Prolycht', 'Orion 675 FS', 'fresnel', 675, 'rgb'], ['mid', 'LiteGear', 'LiteMat Spectrum 4', 'mat', 200, 'rgb'],
+  // ใหญ่ · Studio
+  ['big', 'ARRI', 'SkyPanel S30-C', 'softpanel', 400, 'rgb'], ['big', 'ARRI', 'SkyPanel S60-C', 'softpanel', 450, 'rgb'], ['big', 'ARRI', 'SkyPanel S120-C', 'softpanel', 800, 'rgb'], ['big', 'ARRI', 'SkyPanel S360-C', 'softpanel', 1500, 'rgb'],
+  ['big', 'ARRI', 'SkyPanel X', 'softpanel', 1600, 'rgb'], ['big', 'ARRI', 'Orbiter', 'fresnel', 500, 'rgb'], ['big', 'ARRI', 'L5-C', 'fresnel', 115, 'rgb'], ['big', 'ARRI', 'L7-C', 'fresnel', 220, 'rgb'], ['big', 'ARRI', 'L10-C', 'fresnel', 510, 'rgb'],
+  ['big', 'ARRI', 'M8 HMI', 'hmi', 800, 'daylight'], ['big', 'ARRI', 'M18 HMI', 'hmi', 1800, 'daylight'], ['big', 'ARRI', 'M40 HMI', 'hmi', 4000, 'daylight'], ['big', 'ARRI', 'M90 HMI', 'hmi', 9000, 'daylight'], ['big', 'ARRI', 'ARRIMAX 18/12', 'hmi', 18000, 'daylight'],
+  ['big', 'ARRI', 'True Blue T12 (tungsten)', 'fresnel', 12000, 'tungsten'],
+  ['big', 'Aputure', 'Electro Storm XT26', 'fresnel', 2600, 'bicolor'], ['big', 'Aputure', 'Electro Storm CS15', 'fresnel', 1500, 'rgb'], ['big', 'Aputure', 'Electro Storm XT52', 'fresnel', 5200, 'bicolor'],
+  ['big', 'Nanlux', 'Evoke 1200', 'cob', 1200, 'daylight'], ['big', 'Nanlux', 'Evoke 2400B', 'fresnel', 2400, 'bicolor'], ['big', 'Godox Knowled', 'MG1200Bi', 'cob', 1200, 'bicolor'],
+  ['big', 'Creamsource', 'Vortex4', 'softpanel', 650, 'rgb'], ['big', 'Creamsource', 'Vortex8', 'softpanel', 650, 'rgb'], ['big', 'Creamsource', 'Vortex24', 'softpanel', 1300, 'rgb'],
+  ['big', 'Kino Flo', 'Celeb 850', 'softpanel', 400, 'rgb'], ['big', 'Kino Flo', 'FreeStyle 41', 'tube', 200, 'rgb'],
+  ['big', 'Mole-Richardson', '2K Junior', 'fresnel', 2000, 'tungsten'], ['big', 'Mole-Richardson', '5K Senior', 'fresnel', 5000, 'tungsten'], ['big', 'Mole-Richardson', '10K Tener', 'fresnel', 10000, 'tungsten'], ['big', 'Mole-Richardson', '20K Tener', 'fresnel', 20000, 'tungsten'],
+  ['big', 'Mole-Richardson', 'Molebeam 10K', 'par', 10000, 'tungsten'], ['big', 'Mole-Richardson', 'Maxi Brute (9-light)', 'par', 9000, 'tungsten'],
+  ['big', 'Airstar', 'Balloon 4K', 'balloon', 4000, 'bicolor'], ['big', 'Airstar', 'Balloon 8K', 'balloon', 8000, 'bicolor'],
+].map(([scale, brand, model, type, watt, mode, extra], i) => ({ id: 'p' + i, scale, brand, model, type, watt, extra: extra || {}, mode: mode === 'tungsten' ? 'bicolor' : mode, tungsten: mode === 'tungsten', k: mode === 'tungsten' ? 3200 : mode === 'daylight' ? 5600 : LIBMAP[type].d.k }));
+const BRANDS = [...new Set(PRESETS.map(p => p.brand))].sort((a, b) => a.localeCompare(b));
+const SCALES = [['mini', 'จิ๋ว'], ['small', 'เล็ก'], ['mid', 'กลาง'], ['big', 'ใหญ่']];
 const LIB_TABS = [['brands', 'รุ่นไฟตามขนาดกอง'], ['light', 'ประเภทไฟ'], ['kit', 'ชุดไฟของฉัน'], ['grip', 'กริป & ผ้า'], ['camera', 'กล้อง'], ['person', 'คน'], ['set', 'ฉาก / พร็อพ']];
 const DEFAULT_KIT = [
   { id: 'k1', model: 'Aputure 600d', type: 'cob', watt: 600, mode: 'daylight' },
@@ -208,7 +231,7 @@ const DB = {
 const S = {
   projects: [], kit: clone(DEFAULT_KIT), proj: null, scene: null,
   sel: null, tool: 'select', view: { x: 0, y: 0, z: 60 }, tab: 'shots', labels: true,
-  activeShot: null, pen: PEN_COLORS[0], preview: null, undo: [], redo: [],
+  activeShot: null, labelMode: 'short', pen: PEN_COLORS[0], preview: null, undo: [], redo: [],
   snaps: { ends: true, angle: true, openings: true, furniture: true },
 };
 let saveTimer = null;
@@ -306,6 +329,59 @@ function smoothPath(pts) {
 }
 const txt = (x, y, s, size, extra = '') => `<text x="${x.toFixed(3)}" y="${y.toFixed(3)}" font-size="${size}" font-family="${FONT}" text-anchor="middle" ${/\bfill=/.test(extra) ? '' : `fill="${INK}"`} stroke="${PAPER}" stroke-width="${size * .28}" paint-order="stroke" stroke-linejoin="round" ${extra}>${esc(s)}</text>`;
 
+
+// ---------- occlusion: cast rays from a light / camera, stop at walls (minus door & window openings) and solid flags ----------
+function occluders(p) {
+  const out = [], openings = p.items.filter(i => i.type === 'door' || i.type === 'window');
+  for (const w of p.walls) {
+    const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1], L = Math.hypot(dx, dy); if (L < .01) continue;
+    const ux = dx / L, uy = dy / L, cuts = [];
+    for (const o of openings) {
+      const t = (o.x - w.a[0]) * ux + (o.y - w.a[1]) * uy, d = Math.abs((o.x - w.a[0]) * uy - (o.y - w.a[1]) * ux);
+      if (d < .2 && t > -.6 && t < L + .6) { const h = (o.type === 'door' ? .45 : .6) * (o.s || 1); cuts.push([t - h, t + h]); }
+    }
+    cuts.sort((a, b) => a[0] - b[0]);
+    let s0 = 0;
+    for (const [c0, c1] of cuts) { if (c0 > s0) out.push([w.a[0] + ux * s0, w.a[1] + uy * s0, w.a[0] + ux * Math.min(c0, L), w.a[1] + uy * Math.min(c0, L)]); s0 = Math.max(s0, c1); }
+    if (s0 < L) out.push([w.a[0] + ux * s0, w.a[1] + uy * s0, w.b[0], w.b[1]]);
+  }
+  for (const f of p.items) {
+    if (!FRAME_TYPES.includes(f.type) || f.type === 'overhead' || fabricCat(f.fabric) !== 'neg') continue;
+    const [a] = frameDims(f.size), c = Math.cos(rad(f.rot || 0)), s = Math.sin(rad(f.rot || 0));
+    out.push([f.x + s * a / 2, f.y - c * a / 2, f.x - s * a / 2, f.y + c * a / 2]);
+  }
+  return out;
+}
+function segDist(x, y, s) {
+  const dx = s[2] - s[0], dy = s[3] - s[1], L2 = dx * dx + dy * dy || 1, t = clamp(((x - s[0]) * dx + (y - s[1]) * dy) / L2, 0, 1);
+  return Math.hypot(x - s[0] - dx * t, y - s[1] - dy * t);
+}
+function castRay(x, y, ax, ay, r, segs) {
+  let best = r;
+  for (const [x1, y1, x2, y2] of segs) {
+    const sx = x2 - x1, sy = y2 - y1, den = ax * sy - ay * sx;
+    if (Math.abs(den) < 1e-9) continue;
+    const t = ((x1 - x) * sy - (y1 - y) * sx) / den, u = ((x1 - x) * ay - (y1 - y) * ax) / den;
+    if (t > 1e-4 && u >= 0 && u <= 1 && t < best) best = t;
+  }
+  return best;
+}
+function visPath(segs, x, y, dir, ang, r) {
+  const near = segs.filter(s => segDist(x, y, s) < r);
+  if (!near.length) return wedge(x, y, dir, ang, r);
+  const full = ang >= 359, a0 = full ? dir - 180 : dir - ang / 2, a1 = full ? dir + 180 : dir + ang / 2, angs = [];
+  for (let a = a0; a < a1; a += 2) angs.push(a);
+  angs.push(a1);
+  for (const s of near) for (const [px, py] of [[s[0], s[1]], [s[2], s[3]]]) {
+    if (Math.hypot(px - x, py - y) > r) continue;
+    const a = deg(Math.atan2(py - y, px - x));
+    for (const d of [-.04, .04]) { let b = a + d; while (b < a0) b += 360; while (b > a0 + 360) b -= 360; if (b <= a1) angs.push(b); }
+  }
+  angs.sort((p, q) => p - q);
+  const pts = angs.map(a => { const ax = Math.cos(rad(a)), ay = Math.sin(rad(a)), t = castRay(x, y, ax, ay, r, near); return (x + ax * t).toFixed(3) + ' ' + (y + ay * t).toFixed(3); });
+  return (full ? 'M' : `M${x} ${y}L`) + pts.join('L') + 'Z';
+}
+
 function pill(x, y, s, size, bg, fg) {
   s = String(s); const w = s.length * size * .56 + size * 1.1, h = size * 1.7;
   return `<rect x="${(x - w / 2).toFixed(3)}" y="${(y - h / 2).toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}" rx="${(h / 2).toFixed(3)}" fill="${bg}"/><text x="${x.toFixed(3)}" y="${(y + size * .36).toFixed(3)}" font-size="${size}" font-family="${FONT}" text-anchor="middle" fill="${fg}" font-weight="500">${esc(s)}</text>`;
@@ -324,16 +400,17 @@ function planSVG(sc, o) {
     const src = (o.photos || S.proj?.photos || {})[p.bg.ph];
     if (src) out += `<image href="${src}" x="${p.bg.x}" y="${p.bg.y}" width="${p.bg.w}" height="${p.bg.h}" opacity="${p.bg.op ?? .6}" preserveAspectRatio="none"/>`;
   }
-  // light & camera cones
+  // light & camera cones (blocked by walls, through openings)
   let cones = '';
+  const segs = occluders(p);
   for (const it of p.items) {
     if (it.cat === 'light' || (it.type === 'window' && it.sun)) {
       const c = it.type === 'window' ? kColor(it.k) : lightColor(it), dim = (it.dim ?? 100) / 100, r = +it.reach || 3;
       defs += `<radialGradient id="lg${it.id}" gradientUnits="userSpaceOnUse" cx="${it.x}" cy="${it.y}" r="${r}"><stop offset="0" stop-color="${c}" stop-opacity="${(.62 * dim).toFixed(2)}"/><stop offset=".55" stop-color="${c}" stop-opacity="${(.3 * dim).toFixed(2)}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`;
-      cones += `<path d="${wedge(it.x, it.y, it.rot, +it.beam || 60, r)}" fill="url(#lg${it.id})"/>`;
+      cones += `<path d="${visPath(segs, it.x, it.y, it.rot || 0, +it.beam || 60, r)}" fill="url(#lg${it.id})"/>`;
     } else if (it.type === 'camera') {
       const on = o.activeCam ? o.activeCam === it.id : true, r = +it.reach || 4, c = it.color || CAM_COLORS[0];
-      cones += `<path d="${wedge(it.x, it.y, it.rot, hfov(it), r)}" fill="${c}" fill-opacity="${on ? (o.activeCam ? .16 : .08) : .03}" stroke="${c}" stroke-opacity="${on ? .75 : .2}" stroke-width="${Math.max(.012, px * 1.3)}" stroke-dasharray="${on && o.activeCam ? 'none' : '.08 .06'}"/>`;
+      cones += `<path d="${visPath(segs, it.x, it.y, it.rot || 0, hfov(it), r)}" fill="${c}" fill-opacity="${on ? (o.activeCam ? .16 : .08) : .03}" stroke="${c}" stroke-opacity="${on ? .75 : .2}" stroke-width="${Math.max(.012, px * 1.3)}" stroke-dasharray="${on && o.activeCam ? 'none' : '.08 .06'}"/>`;
     }
   }
   out += cones;
@@ -341,8 +418,8 @@ function planSVG(sc, o) {
   const block = (o.wallStyle || S.proj?.wallStyle) === 'block';
   for (const w of p.walls) {
     const t = w.t || .12;
-    if (block) out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="#6A6866" stroke-width="${t + .03}" stroke-linecap="square"/><line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${PAPER}" stroke-width="${t * .5}" stroke-dasharray=".32 .05"/>`;
-    else out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${INK}" stroke-width="${t}" stroke-linecap="square"/>`;
+    if (block) out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="#6A6866" stroke-width="${t * .8}" stroke-linecap="square"/><line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${PAPER}" stroke-width="${t * .4}" stroke-dasharray=".32 .05"/>`;
+    else out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${INK}" stroke-width="${Math.min(t, .06)}" stroke-linecap="round"/>`;
   }
   // items
   for (const it of p.items) {
@@ -363,25 +440,8 @@ function planSVG(sc, o) {
     const c = d.color || PEN_COLORS[0];
     out += `<g data-draw="${d.id}"><path d="${smoothPath(d.pts)}" fill="none" stroke="transparent" stroke-width="${Math.max(.2, 22 * px)}"/><path d="${smoothPath(d.pts)}" fill="none" stroke="${c}" stroke-width="${d.type === 'arrow' ? .045 : .03}" stroke-linecap="round" stroke-linejoin="round" ${d.type === 'arrow' ? `marker-end="url(#ar${c.slice(1)})"` : ''}/></g>`;
   }
-  // labels: DP diagram style (role, model in a dark pill, then K · W)
-  if (o.labels) {
-    for (const it of p.items) {
-      const def = LIBMAP[it.type]; if (!def) continue;
-      const y = it.y + itemR(it) + .2;
-      if (it.cat === 'light') {
-        let yy = y;
-        if (it.label) { out += txt(it.x, yy, it.label, .15, 'fill="#5b5a55" font-weight="500"'); yy += .2; }
-        out += pill(it.x, yy - .05, it.model || def.name, .15, '#2B2B2E', '#fff'); yy += .27;
-        out += txt(it.x, yy, `${kText(it)} · ${it.watt || 0}W${(it.dim ?? 100) < 100 ? ' · ' + it.dim + '%' : ''}${it.gel && it.gel !== '—' ? ' · ' + it.gel : ''}`, .13, 'fill="#5b5a55"');
-      } else if (it.type === 'camera') {
-        out += pill(it.x, y - .05, `${it.label || 'Cam'}${it.body ? ' · ' + it.body : ''} · ${it.lens || 35}mm`, .15, it.color || '#E5D6FF', '#fff');
-      } else if (FRAME_TYPES.includes(it.type)) {
-        out += txt(it.x, y, `${it.size} · ${it.fabric}`, .14, `fill="${FABRIC_STYLE[fabricCat(it.fabric)][2]}" font-weight="600"`);
-      } else if (it.cat === 'person' || it.label) {
-        out += txt(it.x, y, itemName(it), .17, 'font-weight="600"');
-      }
-    }
-  }
+  // labels: DP diagram style (role, model in a dark pill, then K · W), placed so they don't overlap
+  if (o.labels) out += placeLabels(p, px);
   // edit overlays: selection + previews
   if (edit) {
     const ac = '#7B5CE0', sw = 2 * px;
@@ -423,6 +483,79 @@ function planSVG(sc, o) {
   return `<defs>${defs}</defs>` + out;
 }
 
+
+// ---------- label layout: try below / above / right / left of each item, keep the spot with least overlap ----------
+const LW = (s, size) => String(s).length * size * .56;
+function labelLines(it) {
+  const def = LIBMAP[it.type]; if (!def) return null;
+  if (S.labelMode !== 'full') {
+    const dot = it.cat === 'light' ? lightColor(it) : null;
+    if (it.cat === 'light') return [{ t: `${it.label ? it.label + ' ' : ''}${kText(it)}`, size: .15, h: .29, kind: 'pill', bg: '#2B2B2E', fg: '#fff', dot }];
+    if (it.type === 'camera') return [{ t: `${it.label || 'Cam'} ${it.lens || 35}`, size: .15, h: .29, kind: 'pill', bg: it.color || '#2B2B2E', fg: '#fff' }];
+    if (FRAME_TYPES.includes(it.type)) return [{ t: it.size, size: .13, h: .19, kind: 'txt', extra: `fill="${FABRIC_STYLE[fabricCat(it.fabric)][2]}" font-weight="600"` }];
+    if (it.cat === 'person' && it.label) return [{ t: it.label, size: .15, h: .21, kind: 'txt', extra: 'font-weight="600"' }];
+    return null;
+  }
+  if (it.cat === 'light') {
+    const L = [];
+    if (it.label) L.push({ t: it.label, size: .15, h: .2, kind: 'txt', extra: 'fill="#5b5a55" font-weight="500"' });
+    L.push({ t: it.model || def.name, size: .15, h: .29, kind: 'pill', bg: '#2B2B2E', fg: '#fff' });
+    L.push({ t: `${kText(it)} · ${it.watt || 0}W${(it.dim ?? 100) < 100 ? ' · ' + it.dim + '%' : ''}${it.gel && it.gel !== '—' ? ' · ' + it.gel : ''}`, size: .13, h: .18, kind: 'txt', extra: 'fill="#5b5a55"' });
+    return L;
+  }
+  if (it.type === 'camera') return [{ t: `${it.label || 'Cam'}${it.body ? ' · ' + it.body : ''} · ${it.lens || 35}mm`, size: .15, h: .29, kind: 'pill', bg: it.color || '#E5D6FF', fg: '#fff' }];
+  if (FRAME_TYPES.includes(it.type)) return [{ t: `${it.label ? it.label + ' · ' : ''}${it.size} · ${it.fabric}`, size: .14, h: .2, kind: 'txt', extra: `fill="${FABRIC_STYLE[fabricCat(it.fabric)][2]}" font-weight="600"` }];
+  if (it.cat === 'person' || it.label) return [{ t: itemName(it), size: .17, h: .23, kind: 'txt', extra: 'font-weight="600"' }];
+  return null;
+}
+function placeLabels(p, px) {
+  const placed = [], obst = [];
+  const ov = (a, b) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+  for (const it of p.items) {
+    if (it.type === 'overhead' || it.type === 'hazer') continue;
+    const r = it.cat === 'set' && !BACK[it.type] ? itemR(it) * .7 : itemR(it) * .85;
+    obst.push({ id: it.id, x0: it.x - r, x1: it.x + r, y0: it.y - r, y1: it.y + r });
+  }
+  for (const w of p.walls) {
+    const t = (w.t || .12) / 2 + .02;
+    obst.push({ id: 'w', x0: Math.min(w.a[0], w.b[0]) - t, x1: Math.max(w.a[0], w.b[0]) + t, y0: Math.min(w.a[1], w.b[1]) - t, y1: Math.max(w.a[1], w.b[1]) + t, wall: 1 });
+  }
+  let out = '';
+  Object.defineProperty(p, '_labels', { value: placed, writable: true, configurable: true, enumerable: false });
+  for (const it of p.items) {
+    const L = labelLines(it); if (!L) continue;
+    const w = Math.max(...L.map(l => LW(l.t, l.size) + (l.kind === 'pill' ? l.size * 1.1 : 0) + (l.dot ? .22 : 0))) + .06, h = L.reduce((s, l) => s + l.h, 0);
+    const r = itemR(it), g = .1;
+    const cands = [
+      [it.x - w / 2, it.y + r + g], [it.x - w / 2, it.y - r - g - h], [it.x + r + g, it.y - h / 2], [it.x - r - g - w, it.y - h / 2],
+      [it.x - w / 2, it.y + r + g + .45], [it.x - w / 2, it.y - r - g - h - .45], [it.x + r + g + .4, it.y - h / 2], [it.x - r - g - w - .4, it.y - h / 2],
+      [it.x + r * .7 + g, it.y + r * .7 + g], [it.x - r * .7 - g - w, it.y + r * .7 + g], [it.x + r * .7 + g, it.y - r * .7 - g - h], [it.x - r * .7 - g - w, it.y - r * .7 - g - h],
+    ];
+    let best = null;
+    cands.forEach(([x0, y0], i) => {
+      const R = { x0, y0, x1: x0 + w, y1: y0 + h };
+      let sc = i * .015 + (i >= 4 ? .03 : 0);
+      for (const q of placed) sc += ov(R, q) * 6;
+      for (const q of obst) if (q.id !== it.id) sc += ov(R, q) * (q.wall ? .25 : 2);
+      if (!best || sc < best.sc) best = { sc, R, i };
+    });
+    const R = best.R;
+    placed.push(R);
+    if (best.i >= 4 || best.i === 1 && false) {
+      // displaced label: draw a leader back to the item
+      const cx = clamp(it.x, R.x0, R.x1), cy = clamp(it.y, R.y0, R.y1), d = Math.hypot(cx - it.x, cy - it.y) || 1;
+      out += `<path d="M${(it.x + (cx - it.x) / d * r).toFixed(3)} ${(it.y + (cy - it.y) / d * r).toFixed(3)}L${cx.toFixed(3)} ${cy.toFixed(3)}" stroke="#9a968e" stroke-width="${Math.max(.01, px)}"/>`;
+    }
+    let y = R.y0, cx = (R.x0 + R.x1) / 2;
+    for (const l of L) {
+      if (l.kind === 'pill') { out += pill(cx, y + l.h / 2, l.t, l.size, l.bg, l.fg); if (l.dot) out += `<circle cx="${(cx - (LW(l.t, l.size) + l.size * 1.1) / 2 - .05).toFixed(3)}" cy="${(y + l.h / 2).toFixed(3)}" r="${(l.size * .42).toFixed(3)}" fill="${l.dot}" stroke="#fff" stroke-width="${(l.size * .12).toFixed(3)}"/>`; }
+      else out += txt(cx, y + l.size * .95, l.t, l.size, l.extra);
+      y += l.h;
+    }
+  }
+  return out;
+}
+
 function sceneBBox(sc, pad = .6) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   const add = (x, y, r = 0) => { x0 = Math.min(x0, x - r); y0 = Math.min(y0, y - r); x1 = Math.max(x1, x + r); y1 = Math.max(y1, y + r); };
@@ -432,12 +565,33 @@ function sceneBBox(sc, pad = .6) {
     add(it.x, it.y, itemR(it) + .5);
   });
   p.draws.forEach(d => d.pts.forEach(pt => add(pt[0], pt[1], .3)));
+  (p._labels || []).forEach(R => { add(R.x0, R.y0); add(R.x1, R.y1); });
   if (p.bg) { add(p.bg.x, p.bg.y); add(p.bg.x + p.bg.w, p.bg.y + p.bg.h); }
   if (!isFinite(x0)) return { x: -3, y: -2.5, w: 6, h: 5 };
   x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
   const w = Math.max(3, x1 - x0), h = Math.max(2.5, y1 - y0);
   return { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w, h };
 }
+
+
+// ---------- device layout: iPad + iPhone Duo poses. Regular iPhones get no class and keep the phone layout ----------
+function layoutCalc() {
+  const w = innerWidth, h = innerHeight, c = document.documentElement.classList, sw = Math.min(screen.width, screen.height), sh = Math.max(screen.width, screen.height);
+  const book = w >= 820 && w < 1100 && h >= 560 && w > h;            // Duo opened flat (and small tablets in landscape): two halves either side of the fold
+  const lap = !book && w >= 600 && h > w && w / h >= .6;            // Duo half-folded / tablets in portrait: plan on top, controls below
+  const outer = !book && !lap && w >= 440 && w < 600 && h <= 760 && (sw >= 440 || w >= 440); // Duo outer screen: wide but short
+  const big = !book && w >= 1100;                                  // iPad landscape
+  const fold = lap && h / w < 1.38;                                // true Duo laptop pose: split exactly at the fold
+  const prev = c.value;
+  c.toggle('lay-book', book); c.toggle('lay-lap', lap || outer); c.toggle('lay-fold', fold); c.toggle('lay-outer', outer); c.toggle('lay-big', big);
+  const top = document.querySelector('.ed-top');
+  if (top && top.offsetHeight) document.documentElement.style.setProperty('--topH', top.offsetHeight + 'px');
+  return prev !== c.value;
+}
+layoutCalc();
+let layT = null;
+addEventListener('resize', () => { clearTimeout(layT); layT = setTimeout(() => { if (layoutCalc() && S.scene) requestAnimationFrame(() => fitView()); }, 150); });
+const overlayPanel = () => innerWidth <= 820 && !document.documentElement.matches('.lay-lap');
 
 // ---------- editor render ----------
 const svg = $('#plan'), stage = $('#stage');
@@ -458,8 +612,9 @@ function renderNow() {
 function fitView(sc = S.scene) {
   const W = stage.clientWidth, H = stage.clientHeight;
   if (!W || !H) return;
-  const narrow = innerWidth <= 820;
-  const padL = 70, padB = narrow ? 70 : 20, padT = 56;
+  const narrow = overlayPanel(), horizTools = document.documentElement.matches('.lay-lap');
+  const padL = horizTools ? 20 : 70, padB = narrow ? 70 : horizTools ? 76 : 20, padT = 56;
+  if (!sc.plan._labels && S.labels) planSVG(sc, { px: .02, labels: true });
   const bb = sceneBBox(sc, .3);
   const z = clamp(Math.min((W - padL - 20) / bb.w, (H - padT - padB) / bb.h), 10, 400);
   S.view = { z, x: padL + (W - padL - 20) / 2 - (bb.x + bb.w / 2) * z, y: padT + (H - padT - padB) / 2 - (bb.y + bb.h / 2) * z };
@@ -471,7 +626,7 @@ function zoomAt(f, cx, cy) {
   render();
 }
 function viewCenter() {
-  const W = stage.clientWidth, H = stage.clientHeight * (innerWidth <= 820 ? .42 : .5);
+  const W = stage.clientWidth, H = stage.clientHeight * (overlayPanel() ? .42 : .5);
   return [r2((W / 2 - S.view.x) / S.view.z), r2((H - S.view.y) / S.view.z)];
 }
 
@@ -486,33 +641,46 @@ const IC = {
   dim: '<path d="M3 15l12-12 6 6L9 21z"/><path d="M7 11l2 2M10 8l2 2M13 5l2 2"/>',
   text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
   labels: '<path d="M4 7h16M4 12h10M4 17h13"/>',
+  door: '<path d="M6 21V3h10v18M3 21h18M13 12h.5"/>',
+  window: '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M12 4v16M4 12h16"/>',
+  light: '<path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0012 3z"/>',
+  camera: '<path d="M3 10h11v9H3zM14 13l6-3v9l-6-3"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="11.5" cy="6.5" r="2.5"/>',
+  person: '<circle cx="12" cy="7" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+  more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
 };
 const TOOLS = [
-  { id: 'select', t: 'เลือก / ย้าย / หมุน' },
-  { id: 'add', t: 'เพิ่มไฟ กล้อง คน พร็อพ', act: () => openLibrary() },
-  { id: 'room', t: 'สร้างห้อง / นำเข้าแปลนสแกน', act: () => openRoom() },
+  { id: 'select', t: 'เลือก' },
+  { id: 'room', t: 'ห้องสำเร็จรูป', act: () => openRoom() },
+  { id: 'wall', t: 'ผนัง' },
+  { id: 'door', t: 'ประตู (แตะบนผนัง)' },
+  { id: 'window', t: 'หน้าต่าง (แตะบนผนัง)' },
   { sep: 1 },
-  { id: 'wall', t: 'วาดผนัง' },
-  { id: 'arrow', t: 'ลูกศรการเคลื่อนไหว' },
-  { id: 'pen', t: 'ปากกา' },
+  { id: 'light', t: 'ไฟ' },
+  { id: 'camera', t: 'กล้อง' },
+  { id: 'person', t: 'คน' },
+  { id: 'add', t: 'คลังอุปกรณ์ทั้งหมด', act: () => openLibrary() },
+  { sep: 1 },
+  { id: 'arrow', t: 'ลูกศร' },
   { id: 'dim', t: 'วัดระยะ' },
   { id: 'text', t: 'ข้อความ' },
-  { sep: 1 },
-  { id: 'color', t: 'สีปากกา / ลูกศร', act: () => { S.pen = PEN_COLORS[(PEN_COLORS.indexOf(S.pen) + 1) % PEN_COLORS.length]; renderTools(); } },
-  { id: 'labels', t: 'แสดง / ซ่อนป้ายชื่อ', act: () => { S.labels = !S.labels; renderTools(); render(); } },
+  { id: 'color', t: 'สีเส้น', act: () => { S.pen = PEN_COLORS[(PEN_COLORS.indexOf(S.pen) + 1) % PEN_COLORS.length]; renderTools(); } },
+  { id: 'labels', t: 'ป้าย: ย่อ / เต็ม / ซ่อน', act: () => { const m = ['short', 'full', 'off'], n = m[(m.indexOf(S.labelMode || 'short') + 1) % 3]; S.labelMode = n; S.labels = n !== 'off'; delete S.scene.plan._labels; renderTools(); render(); toast({ short: 'ป้ายแบบย่อ', full: 'ป้ายแบบเต็ม', off: 'ซ่อนป้าย' }[n]); } },
 ];
+const PLACE = { light: 'cob', camera: 'camera', person: 'talent', door: 'door', window: 'window' };
 const HINTS = {
-  wall: 'ลากเพื่อวาดผนัง · ปลายดูดติดกัน ต่อแบบ T ได้ · ลากกลับจุดเริ่มเพื่อปิดห้อง',
-  arrow: 'ลากเพื่อวาดเส้นการเดินของนักแสดง / การเคลื่อนกล้อง',
-  pen: 'วาดโน้ตด้วยมือได้อิสระ',
-  dim: 'ลากเพื่อวัดระยะ (เมตร)',
-  text: 'แตะตรงที่ต้องการใส่ข้อความ',
+  wall: 'ลากเพื่อวาด · ลากกลับจุดเริ่ม = ปิดห้อง',
+  door: 'แตะบนเส้นผนัง', window: 'แตะบนเส้นผนัง',
+  light: 'แตะเพื่อวาง', camera: 'แตะเพื่อวาง', person: 'แตะเพื่อวาง',
+  arrow: 'ลากเส้นการเคลื่อนไหว',
+  pen: 'วาดอิสระ',
+  dim: 'ลากเพื่อวัด',
+  text: 'แตะเพื่อพิมพ์',
   calib: 'ลากเส้นทับระยะที่รู้ความยาวจริงบนภาพ เช่น ความกว้างผนัง',
 };
 function renderTools() {
   $('#tools').innerHTML = TOOLS.map(t => {
     if (t.sep) return '<div class="tsep"></div>';
-    const on = S.tool === t.id || (t.id === 'labels' && S.labels);
+    const on = S.tool === t.id;
     const inner = t.id === 'color' ? `<span class="dot" style="background:${S.pen}"></span>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[t.id]}</svg>`;
     return `<button class="tool${on ? ' on' : ''}" data-tool="${t.id}" title="${t.t}" aria-label="${t.t}">${inner}</button>`;
   }).join('');
@@ -580,7 +748,10 @@ function magnetItem(it) {
     if (n.d > .45) return null;
     const c1 = normDeg(n.ang - 90), c2 = normDeg(n.ang + 90), cur = normDeg(it.rot || 0);
     const dd = a => Math.min(Math.abs(a - cur), 360 - Math.abs(a - cur));
-    it.x = r2(n.q[0]); it.y = r2(n.q[1]); it.rot = dd(c1) <= dd(c2) ? c1 : c2;
+    // swing towards the side of the wall the finger is on (inside the room); on the line itself keep the current side
+    const sx = it.x - n.q[0], sy = it.y - n.q[1], side = a => Math.cos(rad(a)) * sx + Math.sin(rad(a)) * sy;
+    it.x = r2(n.q[0]); it.y = r2(n.q[1]);
+    it.rot = n.d > .03 ? (side(c1) > side(c2) ? c1 : c2) : (dd(c1) <= dd(c2) ? c1 : c2);
     return { pt: n.q, kind: 'เข้าผนัง' };
   }
   const back = BACK[it.type] * (it.s || 1);
@@ -643,6 +814,8 @@ svg.addEventListener('pointerdown', e => {
     S.preview = { type: 'stroke', pts: [w], color: S.pen, arrow: tool === 'arrow' };
   } else if (tool === 'text') {
     op = { kind: 'text', ...start };
+  } else if (PLACE[tool]) {
+    op = { kind: 'place', ...start };
   }
   render();
 });
@@ -730,6 +903,19 @@ function endPointer(e) {
   } else if (o.kind === 'stroke' && pv) {
     if (pv.pts.length > 1) { snap(); P().draws.push({ id: uid(), type: S.tool === 'arrow' ? 'arrow' : 'pen', pts: simplify(pv.pts), color: pv.color }); save(); }
     S.preview = null;
+  } else if (o.kind === 'place') {
+    const type = PLACE[S.tool], opening = type === 'door' || type === 'window';
+    const it = makeItem(type, r2(o.w[0]), r2(o.w[1]));
+    if (opening) {
+      const n = nearestOnWall([it.x, it.y]);
+      if (!n || n.d > 1.2) { toast('แตะบนเส้นผนัง'); render(); return; }
+      if (n.d > .4) { it.x = r2(n.q[0] + (it.x - n.q[0]) / n.d * .3); it.y = r2(n.q[1] + (it.y - n.q[1]) / n.d * .3); }
+      const keep = S.snaps.openings; S.snaps.openings = true; magnetItem(it); S.snaps.openings = keep;
+    }
+    if (type === 'talent') { const used = new Set(P().items.filter(i => i.cat === 'person').map(i => i.color)); it.color = PERSON_COLORS.find(c => !used.has(c)) || PERSON_COLORS[0]; it.label = String.fromCharCode(65 + P().items.filter(i => i.cat === 'person').length % 26); }
+    snap(); P().items.push(it); save();
+    if (!opening) setTool('select');
+    selectThing({ t: 'item', id: it.id });
   } else if (o.kind === 'text') {
     const t = prompt('ข้อความบนแปลน');
     if (t && t.trim()) { snap(); const d = { id: uid(), type: 'text', pts: [[r2(o.w[0]), r2(o.w[1])]], text: t.trim(), color: S.pen === PEN_COLORS[0] ? INK : S.pen }; P().draws.push(d); save(); setTool('select'); selectThing({ t: 'draw', id: d.id }); }
@@ -796,7 +982,7 @@ function openPanel() { panel.classList.remove('min'); }
 $('.ptabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
   if (!b) { panel.classList.toggle('min'); return; }
-  if (innerWidth <= 820 && S.tab === b.dataset.tab && !S.sel && !panel.classList.contains('min')) { panel.classList.add('min'); return; }
+  if (overlayPanel() && S.tab === b.dataset.tab && !S.sel && !panel.classList.contains('min')) { panel.classList.add('min'); return; }
   S.tab = b.dataset.tab; S.sel = null; openPanel(); renderPanel(); render();
 });
 function fieldHTML(f, v) {
@@ -806,12 +992,19 @@ function fieldHTML(f, v) {
     case 'select': return `<label class="fld">${lab}<select data-k="${f.k}">${f.opts.map(o => { const [val, name] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}"${String(val) === String(v) ? ' selected' : ''}>${esc(name)}</option>`; }).join('')}</select></label>`;
     case 'range': return `<label class="fld">${lab}<input type="range" data-k="${f.k}" data-unit="${f.unit || ''}" min="${f.min}" max="${f.max}" step="${f.step || 1}" value="${v ?? f.min}"></label>`;
     case 'textarea': return `<label class="fld">${lab}<textarea data-k="${f.k}" placeholder="${esc(f.ph || '')}">${esc(v)}</textarea></label>`;
+    case 'swatch': return `<div class="fld"><span>${f.label}</span><div class="swgrid" role="radiogroup" aria-label="${f.label}">${f.opts.map(c => `<button type="button" role="radio" aria-checked="${c === v}" aria-label="${f.label} ${c}" data-sw="${f.k}" data-v="${c}" class="${c === v ? 'on' : ''}" style="background:${c}"></button>`).join('')}</div></div>`;
     case 'check': return `<label class="fld chk"><input type="checkbox" data-k="${f.k}"${v ? ' checked' : ''}><span style="color:var(--text)">${f.label}</span></label>`;
     case 'color': return `<label class="fld">${lab}<input type="color" data-k="${f.k}" value="${esc(v || '#ffffff')}" style="height:40px;padding:4px"></label>`;
     default: return `<label class="fld">${lab}<input type="${f.type || 'text'}" data-k="${f.k}" value="${esc(v)}" ${f.type === 'number' ? `step="${f.step || 'any'}" inputmode="decimal"` : ''} placeholder="${esc(f.ph || '')}"></label>`;
   }
 }
 function bindFields(root, obj, onChange, undoable = true) {
+  $$('[data-sw]', root).forEach(b => b.onclick = () => {
+    if (undoable) snap();
+    obj[b.dataset.sw] = b.dataset.v;
+    $$(`[data-sw="${b.dataset.sw}"]`, root).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', x === b); });
+    onChange && onChange(b.dataset.sw, b.dataset.v); save(); render();
+  });
   $$('[data-k]', root).forEach(el => {
     let snapped = false;
     const start = () => { if (!snapped && undoable) { snap(); snapped = true; } };
@@ -871,14 +1064,14 @@ function inspectorFields(it) {
       { row: [{ k: 'sensor', label: 'เซนเซอร์', type: 'select', opts: Object.entries(SENSORS).map(([k, v]) => [k, v[0]]) }, { k: 'lens', label: 'เลนส์', type: 'number', unit: 'mm' }] },
       { k: 'reach', label: 'ระยะแสดง FOV', type: 'range', min: 1, max: 12, step: .5, unit: 'm' },
       { k: 'height', label: 'ความสูงกล้อง', type: 'number', unit: 'm', step: .1 },
-      { k: 'color', label: 'สีกล้อง', type: 'select', opts: CAM_COLORS.map((c, i) => [c, ['แดง', 'น้ำเงิน', 'เขียว', 'ม่วง', 'ส้ม', 'ฟ้า'][i]]) },
+      { k: 'color', label: 'สีกล้อง', type: 'swatch', opts: CAM_COLORS },
     );
   } else if (FRAME_TYPES.includes(it.type)) {
     const cats = it.type === 'diffusion' ? ['diff'] : it.type === 'bounce' ? ['bounce'] : it.type === 'net' ? ['net'] : it.type === 'flag' || it.type === 'neg' ? ['neg', 'net'] : ['diff', 'bounce', 'neg', 'net'];
     base.push({ k: 'label', label: 'ชื่อ / ป้าย', ph: 'เช่น Key diffusion' },
       { row: [{ k: 'size', label: 'ขนาดเฟรม (ฟุต / นิ้ว)', type: 'select', opts: FRAME_SIZES }, { k: 'fabric', label: 'ผ้า', type: 'select', opts: cats.flatMap(c => FABRICS[c]) }] });
   } else if (it.cat === 'person') {
-    base.push({ k: 'label', label: 'ชื่อ / บทบาท', ph: 'เช่น แขกรับเชิญ, Director' }, { k: 'color', label: 'สี', type: 'select', opts: PERSON_COLORS.map((c, i) => [c, ['เหลือง', 'แดง', 'น้ำเงิน', 'เขียว', 'ม่วง', 'เทา'][i]]) });
+    base.push({ k: 'label', label: 'ชื่อ / บทบาท', ph: 'เช่น แขกรับเชิญ, Director' }, { k: 'color', label: 'สี', type: 'swatch', opts: PERSON_COLORS });
   } else if (it.type === 'window') {
     base.push({ k: 'label', label: 'ชื่อ', ph: 'เช่น หน้าต่างทิศตะวันตก' }, { k: 'sun', label: 'แสดงแสงที่เข้ามาจากหน้าต่าง', type: 'check' }, { k: 'k', label: 'อุณหภูมิแสง', type: 'range', min: 2700, max: 7500, step: 100, unit: 'K', chips: true }, { row: [{ k: 'beam', label: 'มุมแสง', type: 'range', min: 30, max: 180, step: 5, unit: '°' }, { k: 'reach', label: 'ระยะ', type: 'range', min: 1, max: 10, step: .5, unit: 'm' }] });
   } else {
@@ -1035,10 +1228,11 @@ function renderSceneTab() {
 }
 
 // ---------- modals ----------
-function modal(html, { wide, onClose } = {}) {
+function modal(html, { wide, onClose, cls } = {}) {
   const back = document.createElement('div');
   back.className = 'mback';
-  back.innerHTML = `<div class="modal${wide ? ' wide' : ''}" role="dialog">${html}</div>`;
+  back.innerHTML = `<div class="modal${wide ? ' wide' : ''}${cls ? ' ' + cls : ''}" role="dialog">${html}</div>`;
+  if (cls) back.classList.add('mb-' + cls);
   document.body.appendChild(back);
   const m = back.firstChild;
   const close = () => { back.remove(); onClose && onClose(); };
@@ -1148,16 +1342,19 @@ function openLibrary(tab = 'brands') {
   let q = '';
   const showBrands = () => {
     const sc = S.libScale || 'mid', ql = q.toLowerCase();
-    const list = PRESETS.filter(p => (ql ? (p.brand + ' ' + p.model).toLowerCase().includes(ql) : p.scale === sc));
-    grid.innerHTML = list.map(p => `<button data-preset="${p.id}">${miniIcon(p.type)}<b>${esc(p.model)}</b><small>${esc(p.brand)} · ${p.watt >= 1000 ? (p.watt / 1000) + 'kW' : p.watt + 'W'} · ${p.mode === 'rgb' ? 'RGB' : p.mode === 'daylight' ? 'Daylight' : p.k === 3200 && p.watt >= 5000 ? 'Tungsten' : 'Bi-color'}</small></button>`).join('') || '<p class="muted">ไม่พบรุ่นนี้ ลองเพิ่มเองในชุดไฟของฉัน</p>';
+    const list = PRESETS.filter(p => S.libBrand ? p.brand === S.libBrand : ql ? (p.brand + ' ' + p.model).toLowerCase().includes(ql) : p.scale === sc);
+    grid.innerHTML = list.map(p => `<button data-preset="${p.id}">${miniIcon(p.type)}<b>${esc(p.model)}</b><small>${esc(p.brand)} · ${p.watt >= 1000 ? (p.watt / 1000) + 'kW' : p.watt + 'W'} · ${p.tungsten ? 'Tungsten' : p.mode === 'rgb' ? 'RGB' : p.mode === 'daylight' ? 'Daylight' : 'Bi-color'}</small></button>`).join('') || '<p class="muted">ไม่พบรุ่นนี้ ลองเพิ่มเองในชุดไฟของฉัน</p>';
   };
   const show = t => {
     $$('[data-lt]', m).forEach(b => b.classList.toggle('on', b.dataset.lt === t));
     top.innerHTML = '';
     if (t === 'brands') {
-      top.innerHTML = `<div class="seg" id="libScale">${SCALES.map(([k, n]) => `<button data-sc="${k}" class="${(S.libScale || 'mid') === k ? 'on' : ''}">${n}</button>`).join('')}</div><input class="libq" type="search" aria-label="ค้นหารุ่นไฟ" placeholder="ค้นหายี่ห้อ / รุ่น เช่น Aputure, SkyPanel" value="${esc(q)}">`;
-      $('#libScale', m).onclick = e => { const b = e.target.closest('[data-sc]'); if (!b) return; S.libScale = b.dataset.sc; q = ''; $('.libq', m).value = ''; $$('#libScale button', m).forEach(x => x.classList.toggle('on', x === b)); showBrands(); };
-      $('.libq', m).oninput = e => { q = e.target.value.trim(); showBrands(); };
+      top.innerHTML = `<div class="seg" id="libScale">${SCALES.map(([k, n]) => `<button data-sc="${k}" class="${!S.libBrand && (S.libScale || 'mid') === k ? 'on' : ''}">${n}</button>`).join('')}</div><input class="libq" type="search" aria-label="ค้นหารุ่นไฟ" placeholder="ค้นหา เช่น Ulanzi, SkyPanel" value="${esc(q)}">
+        <div class="brandrow" role="group" aria-label="ยี่ห้อ">${BRANDS.map(b => `<button type="button" data-br="${esc(b)}" class="${S.libBrand === b ? 'on' : ''}">${esc(b)}</button>`).join('')}</div>`;
+      const sync = () => { $$('#libScale button', m).forEach(x => x.classList.toggle('on', !S.libBrand && !q && x.dataset.sc === (S.libScale || 'mid'))); $$('[data-br]', m).forEach(x => x.classList.toggle('on', x.dataset.br === S.libBrand)); showBrands(); };
+      $('#libScale', m).onclick = e => { const b = e.target.closest('[data-sc]'); if (!b) return; S.libScale = b.dataset.sc; S.libBrand = null; q = ''; $('.libq', m).value = ''; sync(); };
+      $('.libq', m).oninput = e => { q = e.target.value.trim(); S.libBrand = null; sync(); };
+      $('.brandrow', m).onclick = e => { const b = e.target.closest('[data-br]'); if (!b) return; S.libBrand = S.libBrand === b.dataset.br ? null : b.dataset.br; q = ''; $('.libq', m).value = ''; sync(); };
       return showBrands();
     }
     if (t === 'kit') {
@@ -1174,7 +1371,7 @@ function openLibrary(tab = 'brands') {
     if (a) it = makeItem(a.dataset.add, x, y);
     else if (pr) {
       const p = PRESETS.find(z => z.id === pr.dataset.preset);
-      it = makeItem(p.type, x, y, { model: p.brand + ' ' + p.model, watt: p.watt, mode: p.mode, k: p.k });
+      it = makeItem(p.type, x, y, { model: p.brand + ' ' + p.model, watt: p.watt, mode: p.mode, k: p.k, ...p.extra });
     } else {
       const kd = S.kit.find(z => z.id === k.dataset.kit);
       it = makeItem(kd.type, x, y, { model: kd.model, watt: kd.watt, mode: kd.mode, k: kd.mode === 'daylight' ? 5600 : LIBMAP[kd.type].d.k });
@@ -1198,33 +1395,33 @@ function openKit() {
   draw();
 }
 
+const ROOMS = [
+  ['rect', 'สี่เหลี่ยม', 'M3 3h24v18H3z', (W, L) => [[0, 0], [W, 0], [W, L], [0, L]]],
+  ['L', 'ตัว L', 'M3 3h14v8h10v10H3z', (W, L) => [[0, 0], [W * .6, 0], [W * .6, L * .45], [W, L * .45], [W, L], [0, L]]],
+  ['U', 'ตัว U', 'M3 3h7v10h10V3h7v18H3z', (W, L) => [[0, 0], [W * .3, 0], [W * .3, L * .55], [W * .7, L * .55], [W * .7, 0], [W, 0], [W, L], [0, L]]],
+  ['T', 'ตัว T', 'M3 3h24v7h-8v11h-8V10H3z', (W, L) => [[0, 0], [W, 0], [W, L * .4], [W * .67, L * .4], [W * .67, L], [W * .33, L], [W * .33, L * .4], [0, L * .4]]],
+  ['hall', 'โถงยาว', 'M2 7h26v10H2z', (W, L) => [[0, 0], [W, 0], [W, L * .4], [0, L * .4]]],
+];
 function openRoom() {
-  const m = modal(`<h3>สร้างห้อง ${closeX}</h3>
-    <div class="note" style="margin-bottom:14px"><b style="color:var(--text)">สแกนห้องด้วย LiDAR:</b> เวอร์ชัน iOS จะใช้ Apple RoomPlan สแกนผนัง ประตู หน้าต่าง และเฟอร์นิเจอร์อัตโนมัติ ตอนนี้ในเว็บ ให้สแกนด้วยแอปที่ส่งออกแปลนเป็นภาพได้ (เช่น แอปสแกนห้องบน iPhone Pro) แล้วนำเข้าภาพด้านล่าง จากนั้นตั้งสเกลให้ตรงกับขนาดจริง</div>
-    <h4 style="margin-top:0">ห้องสี่เหลี่ยม</h4>
-    <div class="grid2">${fieldHTML({ k: 'w', label: 'กว้าง', type: 'number', unit: 'm', step: .1 }, 5)}${fieldHTML({ k: 'h', label: 'ยาว', type: 'number', unit: 'm', step: .1 }, 4)}</div>
-    <label class="fld chk"><input type="checkbox" id="rmReplace" checked><span style="color:var(--text)">แทนที่ผนังเดิม</span></label>
-    <div class="acts"><button class="btn primary" id="rmMake">สร้างห้อง</button></div>
-    <h4>นำเข้าแปลน / ภาพสแกน / ภาพถ่ายมุมบน</h4>
-    <div class="acts"><button class="btn" id="rmImg">เลือกภาพแปลน</button></div>`);
-  $('#rmMake', m).onclick = () => {
-    const w = parseFloat($('[data-k="w"]', m).value), h = parseFloat($('[data-k="h"]', m).value);
-    if (!(w > .5 && h > .5)) return toast('ใส่ขนาดห้องให้ถูกต้อง');
+  const m = modal(`<h3>ห้อง ${closeX}</h3>
+    <div class="roomgrid">${ROOMS.map(([k, n, d]) => `<button type="button" data-room="${k}" aria-label="${n}" title="${n}"><svg viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg><small>${n}</small></button>`).join('')}
+      <button type="button" data-room="img" aria-label="นำเข้าแปลน" title="นำเข้าแปลน / สแกน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg><small>ภาพแปลน</small></button></div>
+    <div class="grid2" style="margin-top:12px">${fieldHTML({ k: 'w', label: 'กว้าง (m)', type: 'number', step: .1 }, 6)}${fieldHTML({ k: 'h', label: 'ยาว (m)', type: 'number', step: .1 }, 5)}</div>`, { cls: 'pop' });
+  $('.roomgrid', m).onclick = async e => {
+    const b = e.target.closest('[data-room]'); if (!b) return;
+    if (b.dataset.room === 'img') {
+      const f = await pickFile('image/*'); if (!f) return;
+      const img = await fileToJPEG(f, 2200, .85);
+      snap();
+      const w = 8, h = w * img.h / img.w, [cx, cy] = viewCenter();
+      P().bg = { ph: addPhoto(img.src), x: r2(cx - w / 2), y: r2(cy - h / 2), w, h: r2(h), op: .6 };
+      save(); m.close(); fitView(); renderPanel(); toast('ลากเส้นทับระยะที่รู้ขนาดเพื่อตั้งสเกล'); startCalib(); return;
+    }
+    const W = parseFloat($('[data-k="w"]', m).value) || 6, L = parseFloat($('[data-k="h"]', m).value) || 5;
+    const pts = ROOMS.find(r => r[0] === b.dataset.room)[3](W, L).map(([x, y]) => [r2(x - W / 2), r2(y - L / 2)]);
     snap();
-    if ($('#rmReplace', m).checked) P().walls = [];
-    const x0 = r2(-w / 2), y0 = r2(-h / 2), x1 = r2(w / 2), y1 = r2(h / 2);
-    [[[x0, y0], [x1, y0]], [[x1, y0], [x1, y1]], [[x1, y1], [x0, y1]], [[x0, y1], [x0, y0]]].forEach(([a, b]) => P().walls.push({ id: uid(), a, b, t: .12 }));
-    save(); m.close(); fitView();
-  };
-  $('#rmImg', m).onclick = async () => {
-    const f = await pickFile('image/*'); if (!f) return;
-    const img = await fileToJPEG(f, 2200, .85);
-    snap();
-    const w = 8, h = w * img.h / img.w, [cx, cy] = viewCenter();
-    P().bg = { ph: addPhoto(img.src), x: r2(cx - w / 2), y: r2(cy - h / 2), w, h: r2(h), op: .6 };
-    save(); m.close(); fitView(); renderPanel();
-    toast('นำเข้าแล้ว ลากเส้นทับระยะที่รู้ขนาดจริงเพื่อตั้งสเกล');
-    startCalib();
+    P().walls = pts.map((a, i) => ({ id: uid(), a, b: pts[(i + 1) % pts.length], t: .12 }));
+    save(); m.close(); fitView(); if (P().items.length) toast('เปลี่ยนห้องแล้ว · ย้อนกลับได้');
   };
 }
 function startCalib() { selectThing(null); setTool('calib'); }
@@ -1322,7 +1519,8 @@ function openProject(p) {
   $('#home').hidden = true; $('#editor').hidden = false;
   S.tool = 'select'; renderTools();
   switchScene(p.scenes[0]);
-  if (innerWidth > 820) openPanel();
+  if (!overlayPanel()) openPanel();
+  layoutCalc();
 }
 function gcPhotos(p) {
   const used = new Set();
@@ -1400,7 +1598,6 @@ $('#btnImport').onclick = async () => {
 // ---------- demo ----------
 function demoProject() {
   const p = newProject('สัมภาษณ์ · Founder Talk', 'Studio Hoya', new Date().toISOString().slice(0, 10));
-  p.wallStyle = 'block';
   const sc = p.scenes[0];
   Object.assign(sc, { number: '1', name: 'สัมภาษณ์ – ห้องนั่งเล่น', location: 'บ้านลูกค้า · ห้องนั่งเล่น', time: 'กลางวัน', notes: 'โทนอบอุ่น ธรรมชาติ ให้แสงหน้าต่างเป็นแสงหลักของพื้นหลัง ปิดไฟเพดานทั้งหมด' });
   S.scene = sc;
@@ -1415,6 +1612,7 @@ function demoProject() {
   add('coffee', 0, .95, 90, { s: .7 });
   add('plant', 2.5, -2, 0); add('cabinet', 2.72, .6, 180);
   add('practical', 2.55, 1.9, 0, { label: 'โคมตั้งพื้น', k: 2700, watt: 40 });
+  add('hmi', .6, -4.4, 90, { label: 'Sun', model: 'ARRI M18 HMI', watt: 1800, beam: 34, reach: 8.5, dim: 80 });
   add('cob', 2.3, -1.55, 147, { label: 'Key', model: 'Aputure STORM 1200x', watt: 1200, mode: 'bicolor', k: 5600, dim: 70, gel: '¼ CTO', aim: guest.id });
   add('diffusion', 1.5, -.95, 145, { size: '8×8', fabric: '¼ Grid' });
   add('lantern', -2.1, -1.6, 37, { label: 'Fill', model: 'Aputure amaran 200x S', watt: 200, k: 4300, dim: 40 });
@@ -1479,6 +1677,7 @@ async function pagesToPDF(canvases) {
   return new Blob(chunks, { type: 'application/pdf' });
 }
 async function planCanvas(sc, bw, bh, { scaleBar = true, fitTo } = {}) {
+  planSVG(sc, { px: .02, labels: true });
   const bb = fitTo || sceneBBox(sc);
   if (!bw) { const k = Math.min(3200 / bb.w, 3200 / bb.h, 260); bw = Math.round(bb.w * k); bh = Math.round(bb.h * k); }
   const k = Math.min(bw / bb.w, bh / bb.h);
