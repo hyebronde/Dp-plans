@@ -595,15 +595,21 @@ function layoutCalc() {
   const book = flt && w >= 820 && w < 1100 && w > h && !short;     // Duo opened flat in landscape (home screen uses two halves)
   const big = flt && w >= 1100;
   const prev = c.value;
-  c.toggle('float-ui', flt); c.toggle('lay-short', short);
-  c.toggle('lay-book', book); c.toggle('lay-lap', outer); c.toggle('lay-fold', false); c.toggle('lay-outer', outer); c.toggle('lay-big', big);
+  c.toggle('float-ui', flt); c.toggle('lay-short', short); c.toggle('q-compact', short || !flt);
+  c.toggle('lay-book', book); c.toggle('lay-lap', false); c.toggle('lay-fold', false); c.toggle('lay-outer', outer); c.toggle('lay-big', big);
+  // the real visible height (iOS can report stale sizes right after folding / rotating)
+  document.documentElement.style.setProperty('--appH', Math.round(window.visualViewport ? visualViewport.height : innerHeight) + 'px');
   const top = document.querySelector('.ed-top');
   if (top && top.offsetHeight) document.documentElement.style.setProperty('--topH', top.offsetHeight + 'px');
   return prev !== c.value;
 }
 layoutCalc();
 let layT = null;
-addEventListener('resize', () => { clearTimeout(layT); layT = setTimeout(() => { if (layoutCalc() && S.scene) requestAnimationFrame(() => fitView()); }, 150); });
+const relayout = (delay = 150) => { clearTimeout(layT); layT = setTimeout(() => { const ch = layoutCalc(); if (S.scene) { fitTools(); requestAnimationFrame(() => { if (ch) fitView(); render(); placeQuick(); }); } }, delay); };
+addEventListener('resize', () => relayout());
+addEventListener('orientationchange', () => { relayout(300); relayout(800); });
+if (window.visualViewport) visualViewport.addEventListener('resize', () => relayout());
+document.addEventListener('visibilitychange', () => { if (!document.hidden) relayout(200); });
 const isFloat = () => document.documentElement.classList.contains('float-ui');
 // small popover instead of the big form: floating layouts and phones held upright
 const quickMode = () => isFloat() || (innerWidth <= 820 && !document.documentElement.matches('.lay-lap,.float-ui'));
@@ -1119,7 +1125,7 @@ function placeQuick() {
     if (S.qpanFor !== it.id) {
       S.qpanFor = it.id;
       const sy = S.view.y + it.y * S.view.z, r = itemR(it) * S.view.z;
-      if (sy + r > top - 16) { S.view.y -= sy - Math.max(100, top * .55); render(); }
+      if (sy + r > top - 16 || sy - r < 80) { S.view.y -= sy - Math.max(130, top * .55); render(); }
     }
     return;
   }

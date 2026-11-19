@@ -79,7 +79,7 @@ small{font-size:12px}
 .feat b{display:block;font-size:14px;margin-bottom:2px}
 
 /* ---------- editor ---------- */
-#editor{position:fixed;inset:0;display:grid;grid-template-rows:auto 1fr;background:var(--bg)}
+#editor{position:fixed;top:0;left:0;right:0;height:var(--appH,100dvh);display:grid;grid-template-rows:auto 1fr;background:var(--bg)}
 .ed-top{display:flex;align-items:center;gap:6px;padding:calc(env(safe-area-inset-top) + 6px) max(10px,env(safe-area-inset-right)) 6px max(10px,env(safe-area-inset-left));background:var(--surface);border-bottom:1px solid var(--line);min-width:0}
 .scene-btn{border:0;background:transparent;text-align:left;padding:4px 8px;border-radius:10px;min-width:0;display:flex;flex-direction:column;line-height:1.2}
 .scene-btn:hover{background:var(--surface2)}
@@ -299,8 +299,11 @@ body{background:var(--frost);background-attachment:fixed;min-height:100%}
 /* Duo outer screen: phone layout, tighter toolbar so it fits the short screen */
 html.lay-outer .tool{width:40px;height:40px}
 html.lay-outer #tools{gap:0;padding:4px}
-html.lay-outer .ed-main{grid-template-rows:minmax(0,1.15fr) minmax(0,1fr)}
-html.lay-outer #tools{bottom:8px}
+/* Duo outer screen: phone layout, plan + sheet use the full width; only the header and zoom keep clear of the side status bar */
+html.lay-outer .ed-main{padding-right:10px}
+html.lay-outer #zoom{right:max(10px,calc(env(safe-area-inset-right) - 10px))}
+html.lay-outer .stat b{font-size:20px}
+html.lay-outer .pbody h3{font-size:19px}
 html.lay-outer .pbody{padding:12px}
 /* Portrait tablets + Duo half-folded: plan on top, controls below (split at the fold on Duo) */
 html.lay-lap .ed-main{grid-template-columns:1fr;grid-template-rows:minmax(0,1.35fr) minmax(0,1fr)}
@@ -490,6 +493,14 @@ html.lay-short #qpop{width:270px;padding:10px;gap:8px;max-height:calc(100% - 80p
 html.lay-short .qbig span:first-child{font-size:32px}
 html.lay-short .modal,html.lay-short .modal.wide{max-height:calc(100vh - 20px)}
 html.lay-short .mback{align-items:center;padding:10px}
+
+/* compact popover on phones upright and the Duo outer screen */
+html.q-compact #qpop{padding:10px 12px;gap:8px}
+html.q-compact #qpop .qrow+.qrow{display:none}
+html.q-compact .qbig span:first-child{font-size:30px}
+html.q-compact .qbig em{font-size:18px}
+html.q-compact .qico{width:34px;height:34px}
+html.q-compact .qb{height:40px}
 </style>
 </head>
 <body>
