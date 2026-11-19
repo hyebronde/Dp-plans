@@ -520,6 +520,10 @@ function placeLabels(p, px) {
     const t = (w.t || .12) / 2 + .02;
     obst.push({ id: 'w', x0: Math.min(w.a[0], w.b[0]) - t, x1: Math.max(w.a[0], w.b[0]) + t, y0: Math.min(w.a[1], w.b[1]) - t, y1: Math.max(w.a[1], w.b[1]) + t, wall: 1 });
   }
+  for (const d of p.draws) {
+    if (d.type === 'dim') { const [a, b] = d.pts, mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2; obst.push({ id: 'd', x0: mx - .5, x1: mx + .5, y0: my - .3, y1: my + .08 }); }
+    else if (d.type === 'text') { const sz = .26 * (d.s || 1), w = LW(d.text, sz) / 2; obst.push({ id: 'd', x0: d.pts[0][0] - w, x1: d.pts[0][0] + w, y0: d.pts[0][1] - sz, y1: d.pts[0][1] + sz * .3 }); }
+  }
   let out = '';
   Object.defineProperty(p, '_labels', { value: placed, writable: true, configurable: true, enumerable: false });
   for (const it of p.items) {
@@ -613,7 +617,7 @@ function fitView(sc = S.scene) {
   const W = stage.clientWidth, H = stage.clientHeight;
   if (!W || !H) return;
   const narrow = overlayPanel(), horizTools = document.documentElement.matches('.lay-lap');
-  const padL = horizTools ? 20 : 70, padB = narrow ? 70 : horizTools ? 76 : 20, padT = 56;
+  const tw = $('#tools')?.offsetWidth || 50, padL = horizTools ? 20 : tw + 24, padB = narrow ? 70 : horizTools ? 76 : 20, padT = 56;
   if (!sc.plan._labels && S.labels) planSVG(sc, { px: .02, labels: true });
   const bb = sceneBBox(sc, .3);
   const z = clamp(Math.min((W - padL - 20) / bb.w, (H - padT - padB) / bb.h), 10, 400);
@@ -685,7 +689,16 @@ function renderTools() {
     return `<button class="tool${on ? ' on' : ''}" data-tool="${t.id}" title="${t.t}" aria-label="${t.t}">${inner}</button>`;
   }).join('');
   $('#hint').textContent = HINTS[S.tool] || '';
+  fitTools();
 }
+function fitTools() {
+  const t = $('#tools'), root = document.documentElement;
+  if (!t || !stage.clientHeight) return;
+  t.classList.remove('two');
+  if (root.matches('.lay-lap') || overlayPanel()) return;
+  if (t.scrollHeight > stage.clientHeight - 20) t.classList.add('two');
+}
+new ResizeObserver(() => fitTools()).observe(document.querySelector('#stage'));
 $('#tools').addEventListener('click', e => {
   const b = e.target.closest('[data-tool]'); if (!b) return;
   const t = TOOLS.find(x => x.id === b.dataset.tool);
