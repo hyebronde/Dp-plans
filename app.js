@@ -587,15 +587,16 @@ function sceneBBox(sc, pad = .6) {
 // ---------- device layout: iPad + iPhone Duo poses. Regular iPhones get no class and keep the phone layout ----------
 function layoutCalc() {
   const w = innerWidth, h = innerHeight, c = document.documentElement.classList, sw = Math.min(screen.width, screen.height), sh = Math.max(screen.width, screen.height);
-  const book = w >= 820 && w < 1100 && h >= 560 && w > h;            // Duo opened flat (and small tablets in landscape): two halves either side of the fold
-  const lap = !book && w >= 600 && h > w && w / h >= .6;            // Duo half-folded / tablets in portrait: plan on top, controls below
-  const outer = !book && !lap && w >= 440 && w < 600 && h <= 760 && (sw >= 440 || w >= 440); // Duo outer screen: wide but short
-  const big = !book && w >= 1100;                                  // iPad landscape
-  const fold = lap && h / w < 1.38;                                // true Duo laptop pose: split exactly at the fold
+  // Every screen 600px+ wide (iPad, Duo inner screen, either orientation) and phones held sideways get the
+  // full-screen plan with floating popover + panel. Phones upright keep the bottom sheet; the Duo outer screen splits top/bottom.
+  const short = h < 520 && w > h;                                   // phone in landscape
+  const outer = !short && w >= 440 && w < 600 && h <= 760;         // Duo outer screen: wide but short
+  const flt = !outer && (w >= 600 || short);
+  const book = flt && w >= 820 && w < 1100 && w > h && !short;     // Duo opened flat in landscape (home screen uses two halves)
+  const big = flt && w >= 1100;
   const prev = c.value;
-  const flt = !outer && (book || big || (lap && !fold) || (!lap && w > 820));
-  c.toggle('float-ui', flt);
-  c.toggle('lay-book', book); c.toggle('lay-lap', (lap || outer) && !flt); c.toggle('lay-fold', fold); c.toggle('lay-outer', outer); c.toggle('lay-big', big);
+  c.toggle('float-ui', flt); c.toggle('lay-short', short);
+  c.toggle('lay-book', book); c.toggle('lay-lap', outer); c.toggle('lay-fold', false); c.toggle('lay-outer', outer); c.toggle('lay-big', big);
   const top = document.querySelector('.ed-top');
   if (top && top.offsetHeight) document.documentElement.style.setProperty('--topH', top.offsetHeight + 'px');
   return prev !== c.value;
@@ -604,6 +605,8 @@ layoutCalc();
 let layT = null;
 addEventListener('resize', () => { clearTimeout(layT); layT = setTimeout(() => { if (layoutCalc() && S.scene) requestAnimationFrame(() => fitView()); }, 150); });
 const isFloat = () => document.documentElement.classList.contains('float-ui');
+// small popover instead of the big form: floating layouts and phones held upright
+const quickMode = () => isFloat() || (innerWidth <= 820 && !document.documentElement.matches('.lay-lap,.float-ui'));
 const overlayPanel = () => innerWidth <= 820 && !document.documentElement.matches('.lay-lap,.float-ui');
 
 // ---------- editor render ----------
@@ -626,8 +629,8 @@ function renderNow() {
 function fitView(sc = S.scene) {
   const W = stage.clientWidth, H = stage.clientHeight;
   if (!W || !H) return;
-  const narrow = overlayPanel(), horizTools = document.documentElement.matches('.lay-lap');
-  const tw = $('#tools')?.offsetWidth || 50, padL = horizTools ? 20 : tw + 24, padB = narrow ? 70 : horizTools ? 76 : isFloat() ? 70 : 20, padT = isFloat() ? Math.max(56, (panel.classList.contains('min') ? panel.getBoundingClientRect().bottom - stage.getBoundingClientRect().top : 0) + 16) : 56;
+  const narrow = overlayPanel(), horizTools = document.documentElement.matches('.lay-lap,.lay-short');
+  const tw = $('#tools')?.offsetWidth || 50, padL = document.documentElement.matches('.lay-short') ? (panel.classList.contains('min') ? panel.offsetWidth + 30 : 20) : horizTools ? 20 : tw + 24, padB = narrow ? 70 : horizTools ? 76 : isFloat() ? 70 : 20, padT = document.documentElement.matches('.lay-short') ? 14 : isFloat() ? Math.max(56, (panel.classList.contains('min') ? panel.getBoundingClientRect().bottom - stage.getBoundingClientRect().top : 0) + 16) : 56;
   if (!sc.plan._labels && S.labels) planSVG(sc, { px: .02, labels: true });
   const bb = sceneBBox(sc, .3);
   const z = clamp(Math.min((W - padL - 20) / bb.w, (H - padT - padB) / bb.h), 10, 400);
@@ -706,7 +709,7 @@ function fitTools() {
   if (!t || !stage.clientHeight) return;
   t.classList.remove('two');
   const setW = () => document.documentElement.style.setProperty('--toolsW', (t.offsetLeft + t.offsetWidth + 14) + 'px');
-  if (root.matches('.lay-lap') || overlayPanel()) return;
+  if (root.matches('.lay-lap,.lay-short') || overlayPanel()) return;
   if (t.scrollHeight > stage.clientHeight - 20) t.classList.add('two');
   setW();
 }
@@ -790,11 +793,17 @@ function selectThing(sel) {
   const changed = JSON.stringify(sel) !== JSON.stringify(S.sel);
   S.sel = sel;
   if (changed) {
-    S.qpos = null;
+    S.qpos = null; S.qpanFor = null;
     if (!sel) S.fullInspect = false;
-    if (sel && isFloat() && sel.t !== 'item') S.fullInspect = true;
+    if (sel && quickMode() && sel.t !== 'item') S.fullInspect = true;
     renderPanel();
-    if (sel && (!isFloat() || S.fullInspect)) openPanel();
+    if (sel && (!quickMode() || S.fullInspect)) openPanel();
+    if (sel && sel.t === 'item' && !S.fullInspect && overlayPanel()) panel.classList.add('min');
+    // popover wins when the open floating panel leaves no room beside it
+    if (sel && isFloat() && sel.t === 'item' && !S.fullInspect && !panel.classList.contains('min')) {
+      const t = $('#tools'), free = stage.clientWidth - (t.offsetLeft + t.offsetWidth) - panel.offsetWidth;
+      if (free < 292 + 60) panel.classList.add('min');
+    }
   }
   render();
   renderQuick();
@@ -1022,7 +1031,7 @@ const qbtn = (act, d, label, on) => `<button type="button" class="qb${on ? ' on'
 const QGELS = ['—', '¼ CTO', '½ CTO', 'Full CTO', '¼ CTB', '½ CTB', 'Full CTB', 'Deep Blue'];
 const QBEAMS = [15, 30, 45, 60, 90, 120];
 function renderQuick() {
-  const q = $('#qpop'), it = S.sel?.t === 'item' && isFloat() && !S.fullInspect ? findSel() : null;
+  const q = $('#qpop'), it = S.sel?.t === 'item' && quickMode() && !S.fullInspect && !(overlayPanel() && !panel.classList.contains('min')) ? findSel() : null;
   if (!it) { q.hidden = true; return; }
   const def = LIBMAP[it.type];
   const head = (ico, color, title, sub, extra = '') => `<div class="qhead" data-qdrag><span class="qico" style="color:${color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ico}"/></svg></span><div class="qt"><b>${esc(title)}</b><small>${esc(sub)}</small></div>${extra}</div>`;
@@ -1099,12 +1108,35 @@ function placeQuick() {
     x = sx + gap + w < W - 10 ? sx + gap : sx - gap - w;
     y = sy - h / 2;
   }
-  if (!S.qpos && !panel.classList.contains('min')) {
-    // keep clear of the open floating panel
-    const pr = panel.getBoundingClientRect(), sr = stage.getBoundingClientRect(), pl = pr.left - sr.left, pt = pr.top - sr.top, pb = pr.bottom - sr.top;
-    if (x + w > pl - 10 && y < pb && y + h > pt) x = pl - w - 14;
+  const tl = $('#tools'), minX = (isFloat() || overlayPanel()) && !document.documentElement.matches('.lay-short') ? tl.offsetLeft + tl.offsetWidth + 10 : 10;
+  if (overlayPanel()) {
+    // phone upright: dock above the tab bar, right of the toolbar
+    q.style.width = Math.min(300, W - minX - 10) + 'px';
+    q.style.left = minX + 'px';
+    const top = Math.max(10, H - panel.offsetHeight - q.offsetHeight - 12);
+    q.style.top = top + 'px';
+    // keep the selected item visible above the docked popover (once per selection)
+    if (S.qpanFor !== it.id) {
+      S.qpanFor = it.id;
+      const sy = S.view.y + it.y * S.view.z, r = itemR(it) * S.view.z;
+      if (sy + r > top - 16) { S.view.y -= sy - Math.max(100, top * .55); render(); }
+    }
+    return;
   }
-  q.style.left = clamp(x, 10, Math.max(10, W - w - 10)) + 'px';
+  if (!S.qpos && (!panel.classList.contains('min') || document.documentElement.matches('.lay-short'))) {
+    // keep clear of the open floating panel: try left of it, else above / below the item
+    const pr = panel.getBoundingClientRect(), sr = stage.getBoundingClientRect(), pl = pr.left - sr.left, pt = pr.top - sr.top, pb = pr.bottom - sr.top;
+    const hits = (x1, y1) => x1 + w > pl - 10 && y1 < pb && y1 + h > pt;
+    if (hits(x, y)) {
+      const sx = S.view.x + it.x * S.view.z, sy = S.view.y + it.y * S.view.z, gap = itemR(it) * S.view.z + 20;
+      const prr = pr.right - sr.left;
+      if (pl - w - 14 >= minX) x = pl - w - 14;
+      else if (prr + 14 + w <= W - 10) x = prr + 14;
+      else if (sy - gap - h >= 10) { x = Math.min(sx - w / 2, pl - w - 14); y = sy - gap - h; }
+      else { x = Math.min(sx - w / 2, pl - w - 14); y = sy + gap; }
+    }
+  }
+  q.style.left = clamp(x, minX, Math.max(minX, W - w - 10)) + 'px';
   q.style.top = clamp(y, 10, Math.max(10, H - h - (isFloat() ? 70 : 10))) + 'px';
 }
 // drag a floating window by its handle
@@ -1132,10 +1164,10 @@ const panel = $('#panel'), pbody = $('.pbody');
 function openPanel() { panel.classList.remove('min'); }
 $('.ptabs').addEventListener('click', e => {
   const b = e.target.closest('[data-tab]');
-  if (!b) { panel.classList.toggle('min'); return; }
-  if ((overlayPanel() || isFloat()) && S.tab === b.dataset.tab && !(S.sel && S.fullInspect) && !panel.classList.contains('min')) { panel.classList.add('min'); return; }
+  if (!b) { panel.classList.toggle('min'); renderQuick(); return; }
+  if ((overlayPanel() || isFloat()) && S.tab === b.dataset.tab && !(S.sel && S.fullInspect) && !panel.classList.contains('min')) { panel.classList.add('min'); renderQuick(); return; }
   S.tab = b.dataset.tab;
-  if (isFloat()) S.fullInspect = false; else S.sel = null;
+  if (quickMode()) S.fullInspect = false; else S.sel = null;
   openPanel(); renderPanel(); render(); renderQuick();
 });
 function fieldHTML(f, v) {
@@ -1186,7 +1218,7 @@ function renderPanel() {
   if (!S.scene) return;
   $$('.ptabs [data-tab]').forEach(b => b.classList.toggle('on', !S.sel && b.dataset.tab === S.tab));
   const s = findSel();
-  if (s && (!isFloat() || S.fullInspect)) return renderInspector(s);
+  if (s && (!quickMode() || S.fullInspect)) return renderInspector(s);
   if (S.tab === 'shots') return renderShots();
   if (S.tab === 'lights') return renderLights();
   if (S.tab === 'refs') return renderRefs();
@@ -1293,7 +1325,7 @@ function renderInspector(s) {
   $$('[data-act]', pbody).forEach(b => b.onclick = () => {
     const a = b.dataset.act;
     if (a === 'del') deleteSel();
-    else if (a === 'done') { if (isFloat() && S.sel?.t === 'item') { S.fullInspect = false; panel.classList.add('min'); renderPanel(); renderQuick(); } else selectThing(null); }
+    else if (a === 'done') { if (quickMode() && S.sel?.t === 'item') { S.fullInspect = false; panel.classList.add('min'); renderPanel(); renderQuick(); } else selectThing(null); }
     else if (a === 'dup') duplicateSel();
     else if (a === 'rot90') { snap(); s.rot = normDeg((s.rot || 0) + 90); save(); render(); renderPanel(); }
     else if (a === 'addshot') addShot(s.id);
