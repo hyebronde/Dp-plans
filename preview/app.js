@@ -50,6 +50,8 @@ const SHAPES = {
   crew: it => SHAPES.talent({ color: it.color || '#8b8d98' }),
   softpanel: () => `<rect x="-.1" y="-.62" width=".14" height="1.24" rx=".03" fill="${INK}"/><rect x=".04" y="-.58" width=".04" height="1.16" fill="#eef2ff"/>`,
   mat: () => `<rect x="-.03" y="-.6" width=".06" height="1.2" rx=".02" fill="#fff" stroke="${INK}" stroke-width=".02"/><path d="M-.03-.3H.03M-.03 0H.03M-.03.3H.03" stroke="${INK}" stroke-width=".01"/>`,
+  pocket: () => `<rect x="-.05" y="-.13" width=".09" height=".26" rx=".03" fill="${INK}"/><rect x=".04" y="-.11" width=".025" height=".22" fill="#ffe7a8"/>`,
+  bulb: () => `<circle r=".12" fill="#fff6d6" stroke="${INK}" stroke-width=".025"/><circle r=".05" fill="#FF7A1A"/>`,
   balloon: () => `<circle r=".6" fill="#fff" fill-opacity=".85" stroke="${INK}" stroke-width=".025" stroke-dasharray=".08 .05"/><circle r=".12" fill="${INK}"/>`,
   spacelight: () => `<circle r=".36" fill="#fff" stroke="${INK}" stroke-width=".03"/><circle r=".24" fill="none" stroke="${INK}" stroke-width=".015" stroke-dasharray=".04 .03"/><circle r=".06" fill="${INK}"/>`,
   reflector: () => `<rect x="-.03" y="-.5" width=".06" height="1" rx=".02" fill="#fff" stroke="#8a8a90" stroke-width=".025"/><rect x=".03" y="-.48" width=".02" height=".96" fill="#d9d9de"/>`,
@@ -88,6 +90,8 @@ const LIB = [
   { cat: 'light', type: 'softpanel', name: 'Soft panel (แบบ SkyPanel)', r: .64, d: { beam: 110, reach: 5, watt: 450, mode: 'bicolor', k: 5600, dim: 100, mod: '—' } },
   { cat: 'light', type: 'mat', name: 'Flex mat (แผ่นไฟอ่อน)', r: .62, d: { beam: 120, reach: 3, watt: 200, mode: 'bicolor', k: 3200, dim: 100, mod: 'Softbox' } },
   { cat: 'light', type: 'spacelight', name: 'Space light / China ball', r: .38, d: { beam: 360, reach: 3.5, watt: 300, mode: 'bicolor', k: 3200, dim: 100, mod: 'Lantern' } },
+  { cat: 'light', type: 'pocket', name: 'ไฟจิ๋ว / Pocket LED', r: .16, d: { beam: 100, reach: 1.8, watt: 10, mode: 'rgb', k: 4300, color: '#FF7A1A', dim: 100, mod: '—' } },
+  { cat: 'light', type: 'bulb', name: 'หลอด RGB / Bulb', r: .14, d: { beam: 360, reach: 1.4, watt: 7, mode: 'rgb', k: 2700, color: '#FFB067', dim: 100, mod: '—' } },
   { cat: 'light', type: 'balloon', name: 'Balloon light', r: .62, d: { beam: 360, reach: 9, watt: 2000, mode: 'bicolor', k: 4300, dim: 100, mod: '—' } },
   { cat: 'grip', type: 'diffusion', name: 'Diffusion frame', r: .62, d: { size: '8×8', fabric: '¼ Grid' } },
   { cat: 'grip', type: 'overhead', name: 'Butterfly / Overhead (แนวนอน)', r: 1.9, d: { size: '12×12', fabric: 'Full Silk' } },
@@ -145,33 +149,52 @@ function effK(it) {
   const g = GELS.find(x => x[0] === it.gel);
   return g && g[1] ? Math.round(1e6 / (1e6 / base + g[1]) / 50) * 50 : base;
 }
-// Brand presets by production size: researched lineups (verify specs before a real job)
+// Brand presets by production size. Wattages are approximate (power draw / class) - verify specs before a real job.
 const PRESETS = [
-  ['small', 'Aputure amaran', '100x S', 'cob', 100, 'bicolor'], ['small', 'Aputure amaran', '200x S', 'cob', 200, 'bicolor'],
-  ['small', 'Aputure amaran', '300c', 'cob', 300, 'rgb'], ['small', 'Aputure amaran', 'PT4c', 'tube', 50, 'rgb'],
-  ['small', 'Aputure amaran', 'F21c (mat)', 'mat', 100, 'rgb'], ['small', 'SmallRig', 'RC 60B', 'cob', 60, 'bicolor'],
-  ['small', 'SmallRig', 'RC 120B', 'cob', 120, 'bicolor'], ['small', 'SmallRig', 'RC 220B', 'cob', 220, 'bicolor'],
-  ['small', 'SmallRig', 'RC 450B', 'cob', 450, 'bicolor'], ['small', 'SmallRig', 'RM120 (panel)', 'panel', 12, 'rgb'],
-  ['small', 'Godox', 'SL60IIBi', 'cob', 60, 'bicolor'], ['small', 'Godox', 'UL150 II', 'cob', 150, 'daylight'],
-  ['small', 'Godox', 'TL60 (tube)', 'tube', 20, 'rgb'], ['small', 'Nanlite', 'Forza 60B II', 'fresnel', 60, 'bicolor'],
-  ['small', 'Nanlite', 'PavoTube II 30X', 'tube', 36, 'rgb'], ['small', 'Nanlite', 'FS-200B', 'cob', 200, 'bicolor'],
-  ['mid', 'Aputure', 'LS 600d Pro', 'cob', 600, 'daylight'], ['mid', 'Aputure', 'LS 600c Pro II', 'cob', 600, 'rgb'],
-  ['mid', 'Aputure', 'STORM 1200x', 'cob', 1200, 'bicolor'], ['mid', 'Aputure', 'STORM 1000c', 'cob', 1000, 'rgb'],
-  ['mid', 'Aputure', 'Nova P600c', 'softpanel', 600, 'rgb'], ['mid', 'Aputure', 'INFINIBAR PB12', 'tube', 100, 'rgb'],
-  ['mid', 'Nanlite', 'Forza 500B II', 'fresnel', 500, 'bicolor'], ['mid', 'Nanlite', 'FC-720B', 'cob', 750, 'bicolor'],
-  ['mid', 'Nanlux', 'Evoke 600C', 'cob', 600, 'rgb'], ['mid', 'Nanlux', 'Evoke 150C', 'fresnel', 150, 'rgb'],
-  ['mid', 'Astera', 'Titan Tube', 'tube', 72, 'rgb'], ['mid', 'Astera', 'Helios Tube', 'tube', 36, 'rgb'],
-  ['mid', 'Quasar Science', 'Double Rainbow 4ft', 'tube', 100, 'rgb'], ['mid', 'Litepanels', 'Gemini 2×1', 'softpanel', 350, 'rgb'],
-  ['big', 'ARRI', 'SkyPanel S60-C', 'softpanel', 450, 'rgb'], ['big', 'ARRI', 'SkyPanel S360-C', 'softpanel', 1500, 'rgb'],
-  ['big', 'ARRI', 'SkyPanel X', 'softpanel', 1600, 'rgb'], ['big', 'ARRI', 'Orbiter', 'fresnel', 500, 'rgb'],
-  ['big', 'ARRI', 'L10-C', 'fresnel', 510, 'rgb'], ['big', 'ARRI', 'M18 HMI', 'hmi', 1800, 'daylight'],
-  ['big', 'ARRI', 'M40 HMI', 'hmi', 4000, 'daylight'], ['big', 'ARRI', 'M90 HMI', 'hmi', 9000, 'daylight'],
-  ['big', 'ARRI', 'ARRIMAX 18/12', 'hmi', 18000, 'daylight'], ['big', 'Aputure', 'Electro Storm XT26', 'fresnel', 2600, 'bicolor'],
-  ['big', 'Aputure', 'Electro Storm CS15', 'fresnel', 1500, 'rgb'], ['big', 'Creamsource', 'Vortex24', 'softpanel', 1300, 'rgb'],
-  ['big', 'Kino Flo', 'FreeStyle 41', 'tube', 200, 'rgb'], ['big', 'Mole-Richardson', '10K Tener', 'fresnel', 10000, 'tungsten'],
-  ['big', 'Mole-Richardson', 'Molebeam 10K', 'par', 10000, 'tungsten'], ['big', 'Airstar', 'Balloon 4K', 'balloon', 4000, 'bicolor'],
-].map(([scale, brand, model, type, watt, mode], i) => ({ id: 'p' + i, scale, brand, model, type, watt, mode: mode === 'tungsten' ? 'bicolor' : mode, k: mode === 'tungsten' ? 3200 : mode === 'daylight' ? 5600 : LIBMAP[type].d.k }));
-const SCALES = [['small', 'เล็ก · Creator'], ['mid', 'กลาง · โฆษณา'], ['big', 'ใหญ่ · Studio']];
+  // จิ๋ว · พกพา (pocket, on-camera, tiny tubes and bulbs)
+  ['mini', 'Ulanzi', 'VL49', 'pocket', 5, 'bicolor'], ['mini', 'Ulanzi', 'VL49 RGB', 'pocket', 5, 'rgb'], ['mini', 'Ulanzi', 'VL120', 'pocket', 9, 'bicolor'], ['mini', 'Ulanzi', 'VL200', 'pocket', 10, 'bicolor'],
+  ['mini', 'Aputure', 'MC', 'pocket', 5, 'rgb'], ['mini', 'Aputure', 'MC Pro', 'pocket', 8, 'rgb'], ['mini', 'Aputure', 'MT Pro (tube 1ft)', 'tube', 7, 'rgb', { s: .3 }], ['mini', 'Aputure', 'Accent B7c (bulb)', 'bulb', 7, 'rgb'],
+  ['mini', 'Aputure amaran', 'Ace 25c', 'pocket', 25, 'rgb'], ['mini', 'Aputure amaran', 'PT1c (tube 1ft)', 'tube', 10, 'rgb', { s: .3 }], ['mini', 'Aputure amaran', 'PT2c (tube 2ft)', 'tube', 20, 'rgb', { s: .5 }],
+  ['mini', 'Godox', 'R1 (round mini)', 'pocket', 5, 'rgb'], ['mini', 'Godox', 'M1 (mini RGB)', 'pocket', 8, 'rgb'], ['mini', 'Godox', 'ML30Bi', 'fresnel', 30, 'bicolor'], ['mini', 'Godox', 'TL30 (tube)', 'tube', 10, 'rgb', { s: .5 }], ['mini', 'Godox', 'LC30Bi (Litemons)', 'pocket', 30, 'bicolor'],
+  ['mini', 'Zhiyun', 'Fiveray M20', 'pocket', 20, 'bicolor'], ['mini', 'Zhiyun', 'Fiveray M40', 'pocket', 40, 'bicolor'], ['mini', 'Zhiyun', 'Fiveray F100 (stick)', 'tube', 100, 'rgb', { s: .6 }],
+  ['mini', 'SmallRig', 'RM75', 'pocket', 7, 'rgb'], ['mini', 'SmallRig', 'RC 30B', 'fresnel', 30, 'bicolor'],
+  ['mini', 'Nanlite', 'Litolite 5C', 'pocket', 5, 'rgb'], ['mini', 'Nanlite', 'PavoTube II 6C', 'tube', 7, 'rgb', { s: .3 }], ['mini', 'Nanlite', 'PavoBulb 10C', 'bulb', 10, 'rgb'],
+  ['mini', 'Astera', 'NYX Bulb', 'bulb', 10, 'rgb'], ['mini', 'Astera', 'PixelBrick', 'pocket', 15, 'rgb'], ['mini', 'Rotolight', 'NEO 3', 'pocket', 15, 'rgb'],
+  ['mini', 'Lume Cube', 'Panel Mini', 'pocket', 5, 'bicolor'], 
+  // เล็ก · Creator
+  ['small', 'Aputure amaran', '60x S', 'cob', 60, 'bicolor'], ['small', 'Aputure amaran', '100x S', 'cob', 100, 'bicolor'], ['small', 'Aputure amaran', '200x S', 'cob', 200, 'bicolor'],
+  ['small', 'Aputure amaran', '150c', 'cob', 150, 'rgb'], ['small', 'Aputure amaran', '300c', 'cob', 300, 'rgb'], ['small', 'Aputure amaran', 'PT4c', 'tube', 50, 'rgb'], ['small', 'Aputure amaran', 'F21c (mat)', 'mat', 100, 'rgb'], ['small', 'Aputure amaran', 'F22c (mat)', 'mat', 200, 'rgb'],
+  ['small', 'SmallRig', 'RC 60B', 'cob', 60, 'bicolor'], ['small', 'SmallRig', 'RC 120B', 'cob', 120, 'bicolor'], ['small', 'SmallRig', 'RC 220B', 'cob', 220, 'bicolor'], ['small', 'SmallRig', 'RC 350B', 'cob', 350, 'bicolor'], ['small', 'SmallRig', 'RC 450B', 'cob', 450, 'bicolor'], ['small', 'SmallRig', 'RM120 (panel)', 'panel', 12, 'rgb'],
+  ['small', 'Godox', 'ML60IIBi', 'fresnel', 60, 'bicolor'], ['small', 'Godox', 'SL60IIBi', 'cob', 60, 'bicolor'], ['small', 'Godox', 'UL150 II', 'cob', 150, 'daylight'], ['small', 'Godox', 'SL150 III', 'cob', 150, 'daylight'], ['small', 'Godox', 'TL60 (tube)', 'tube', 20, 'rgb'],
+  ['small', 'Nanlite', 'Forza 60B II', 'fresnel', 60, 'bicolor'], ['small', 'Nanlite', 'FS-150B', 'cob', 150, 'bicolor'], ['small', 'Nanlite', 'FS-200B', 'cob', 200, 'bicolor'], ['small', 'Nanlite', 'PavoTube II 15X', 'tube', 18, 'rgb', { s: .5 }], ['small', 'Nanlite', 'PavoTube II 30X', 'tube', 36, 'rgb'],
+  ['small', 'Zhiyun', 'Molus X100', 'cob', 100, 'bicolor'], ['small', 'Zhiyun', 'Molus G200', 'cob', 200, 'bicolor'], ['small', 'Zhiyun', 'Molus G300', 'cob', 300, 'bicolor'],
+  ['small', 'Neewer', 'CB60', 'cob', 70, 'bicolor'], ['small', 'Neewer', 'RGB660 PRO (panel)', 'panel', 50, 'rgb'],
+  // กลาง · โฆษณา
+  ['mid', 'Aputure', 'LS 300d II', 'cob', 300, 'daylight'], ['mid', 'Aputure', 'LS 600d Pro', 'cob', 600, 'daylight'], ['mid', 'Aputure', 'LS 600x Pro', 'cob', 600, 'bicolor'], ['mid', 'Aputure', 'LS 600c Pro II', 'cob', 600, 'rgb'],
+  ['mid', 'Aputure', 'LS 1200d Pro', 'cob', 1200, 'daylight'], ['mid', 'Aputure', 'STORM 1200x', 'cob', 1200, 'bicolor'], ['mid', 'Aputure', 'STORM 1000c', 'cob', 1000, 'rgb'],
+  ['mid', 'Aputure', 'Nova P300c', 'softpanel', 300, 'rgb'], ['mid', 'Aputure', 'Nova P600c', 'softpanel', 600, 'rgb'], ['mid', 'Aputure', 'INFINIBAR PB6', 'tube', 50, 'rgb', { s: .5 }], ['mid', 'Aputure', 'INFINIBAR PB12', 'tube', 100, 'rgb'],
+  ['mid', 'Nanlite', 'Forza 300B II', 'fresnel', 300, 'bicolor'], ['mid', 'Nanlite', 'Forza 500B II', 'fresnel', 500, 'bicolor'], ['mid', 'Nanlite', 'Forza 720B', 'fresnel', 720, 'bicolor'], ['mid', 'Nanlite', 'FC-720B', 'cob', 750, 'bicolor'], ['mid', 'Nanlite', 'FC-720C', 'cob', 750, 'rgb'],
+  ['mid', 'Nanlux', 'Evoke 150C', 'fresnel', 150, 'rgb'], ['mid', 'Nanlux', 'Evoke 600C', 'cob', 600, 'rgb'], ['mid', 'Nanlux', 'Evoke 900C', 'cob', 900, 'rgb'],
+  ['mid', 'Godox Knowled', 'M600Bi', 'cob', 600, 'bicolor'], ['mid', 'Godox Knowled', 'F600Bi (flex)', 'mat', 600, 'bicolor'], ['mid', 'Godox Knowled', 'P600Bi (panel)', 'softpanel', 600, 'bicolor'],
+  ['mid', 'Astera', 'Titan Tube', 'tube', 72, 'rgb'], ['mid', 'Astera', 'Helios Tube', 'tube', 36, 'rgb', { s: .5 }], ['mid', 'Astera', 'Hyperion Tube', 'tube', 100, 'rgb'],
+  ['mid', 'Quasar Science', 'Rainbow 2 (4ft)', 'tube', 50, 'rgb'], ['mid', 'Quasar Science', 'Double Rainbow 4ft', 'tube', 100, 'rgb'],
+  ['mid', 'Litepanels', 'Gemini 2×1 Soft', 'softpanel', 350, 'rgb'], ['mid', 'Litepanels', 'Gemini 2×1 Hard', 'fresnel', 350, 'rgb'], ['mid', 'Rotolight', 'AEOS 2', 'panel', 100, 'rgb'], ['mid', 'Rotolight', 'Titan X2', 'softpanel', 500, 'rgb'],
+  ['mid', 'DMG Lumière', 'SL1 Mix', 'softpanel', 200, 'rgb'], ['mid', 'Prolycht', 'Orion 675 FS', 'fresnel', 675, 'rgb'], ['mid', 'LiteGear', 'LiteMat Spectrum 4', 'mat', 200, 'rgb'],
+  // ใหญ่ · Studio
+  ['big', 'ARRI', 'SkyPanel S30-C', 'softpanel', 400, 'rgb'], ['big', 'ARRI', 'SkyPanel S60-C', 'softpanel', 450, 'rgb'], ['big', 'ARRI', 'SkyPanel S120-C', 'softpanel', 800, 'rgb'], ['big', 'ARRI', 'SkyPanel S360-C', 'softpanel', 1500, 'rgb'],
+  ['big', 'ARRI', 'SkyPanel X', 'softpanel', 1600, 'rgb'], ['big', 'ARRI', 'Orbiter', 'fresnel', 500, 'rgb'], ['big', 'ARRI', 'L5-C', 'fresnel', 115, 'rgb'], ['big', 'ARRI', 'L7-C', 'fresnel', 220, 'rgb'], ['big', 'ARRI', 'L10-C', 'fresnel', 510, 'rgb'],
+  ['big', 'ARRI', 'M8 HMI', 'hmi', 800, 'daylight'], ['big', 'ARRI', 'M18 HMI', 'hmi', 1800, 'daylight'], ['big', 'ARRI', 'M40 HMI', 'hmi', 4000, 'daylight'], ['big', 'ARRI', 'M90 HMI', 'hmi', 9000, 'daylight'], ['big', 'ARRI', 'ARRIMAX 18/12', 'hmi', 18000, 'daylight'],
+  ['big', 'ARRI', 'True Blue T12 (tungsten)', 'fresnel', 12000, 'tungsten'],
+  ['big', 'Aputure', 'Electro Storm XT26', 'fresnel', 2600, 'bicolor'], ['big', 'Aputure', 'Electro Storm CS15', 'fresnel', 1500, 'rgb'], ['big', 'Aputure', 'Electro Storm XT52', 'fresnel', 5200, 'bicolor'],
+  ['big', 'Nanlux', 'Evoke 1200', 'cob', 1200, 'daylight'], ['big', 'Nanlux', 'Evoke 2400B', 'fresnel', 2400, 'bicolor'], ['big', 'Godox Knowled', 'MG1200Bi', 'cob', 1200, 'bicolor'],
+  ['big', 'Creamsource', 'Vortex4', 'softpanel', 650, 'rgb'], ['big', 'Creamsource', 'Vortex8', 'softpanel', 650, 'rgb'], ['big', 'Creamsource', 'Vortex24', 'softpanel', 1300, 'rgb'],
+  ['big', 'Kino Flo', 'Celeb 850', 'softpanel', 400, 'rgb'], ['big', 'Kino Flo', 'FreeStyle 41', 'tube', 200, 'rgb'],
+  ['big', 'Mole-Richardson', '2K Junior', 'fresnel', 2000, 'tungsten'], ['big', 'Mole-Richardson', '5K Senior', 'fresnel', 5000, 'tungsten'], ['big', 'Mole-Richardson', '10K Tener', 'fresnel', 10000, 'tungsten'], ['big', 'Mole-Richardson', '20K Tener', 'fresnel', 20000, 'tungsten'],
+  ['big', 'Mole-Richardson', 'Molebeam 10K', 'par', 10000, 'tungsten'], ['big', 'Mole-Richardson', 'Maxi Brute (9-light)', 'par', 9000, 'tungsten'],
+  ['big', 'Airstar', 'Balloon 4K', 'balloon', 4000, 'bicolor'], ['big', 'Airstar', 'Balloon 8K', 'balloon', 8000, 'bicolor'],
+].map(([scale, brand, model, type, watt, mode, extra], i) => ({ id: 'p' + i, scale, brand, model, type, watt, extra: extra || {}, mode: mode === 'tungsten' ? 'bicolor' : mode, tungsten: mode === 'tungsten', k: mode === 'tungsten' ? 3200 : mode === 'daylight' ? 5600 : LIBMAP[type].d.k }));
+const BRANDS = [...new Set(PRESETS.map(p => p.brand))].sort((a, b) => a.localeCompare(b));
+const SCALES = [['mini', 'จิ๋ว'], ['small', 'เล็ก'], ['mid', 'กลาง'], ['big', 'ใหญ่']];
 const LIB_TABS = [['brands', 'รุ่นไฟตามขนาดกอง'], ['light', 'ประเภทไฟ'], ['kit', 'ชุดไฟของฉัน'], ['grip', 'กริป & ผ้า'], ['camera', 'กล้อง'], ['person', 'คน'], ['set', 'ฉาก / พร็อพ']];
 const DEFAULT_KIT = [
   { id: 'k1', model: 'Aputure 600d', type: 'cob', watt: 600, mode: 'daylight' },
@@ -306,6 +329,59 @@ function smoothPath(pts) {
 }
 const txt = (x, y, s, size, extra = '') => `<text x="${x.toFixed(3)}" y="${y.toFixed(3)}" font-size="${size}" font-family="${FONT}" text-anchor="middle" ${/\bfill=/.test(extra) ? '' : `fill="${INK}"`} stroke="${PAPER}" stroke-width="${size * .28}" paint-order="stroke" stroke-linejoin="round" ${extra}>${esc(s)}</text>`;
 
+
+// ---------- occlusion: cast rays from a light / camera, stop at walls (minus door & window openings) and solid flags ----------
+function occluders(p) {
+  const out = [], openings = p.items.filter(i => i.type === 'door' || i.type === 'window');
+  for (const w of p.walls) {
+    const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1], L = Math.hypot(dx, dy); if (L < .01) continue;
+    const ux = dx / L, uy = dy / L, cuts = [];
+    for (const o of openings) {
+      const t = (o.x - w.a[0]) * ux + (o.y - w.a[1]) * uy, d = Math.abs((o.x - w.a[0]) * uy - (o.y - w.a[1]) * ux);
+      if (d < .2 && t > -.6 && t < L + .6) { const h = (o.type === 'door' ? .45 : .6) * (o.s || 1); cuts.push([t - h, t + h]); }
+    }
+    cuts.sort((a, b) => a[0] - b[0]);
+    let s0 = 0;
+    for (const [c0, c1] of cuts) { if (c0 > s0) out.push([w.a[0] + ux * s0, w.a[1] + uy * s0, w.a[0] + ux * Math.min(c0, L), w.a[1] + uy * Math.min(c0, L)]); s0 = Math.max(s0, c1); }
+    if (s0 < L) out.push([w.a[0] + ux * s0, w.a[1] + uy * s0, w.b[0], w.b[1]]);
+  }
+  for (const f of p.items) {
+    if (!FRAME_TYPES.includes(f.type) || f.type === 'overhead' || fabricCat(f.fabric) !== 'neg') continue;
+    const [a] = frameDims(f.size), c = Math.cos(rad(f.rot || 0)), s = Math.sin(rad(f.rot || 0));
+    out.push([f.x + s * a / 2, f.y - c * a / 2, f.x - s * a / 2, f.y + c * a / 2]);
+  }
+  return out;
+}
+function segDist(x, y, s) {
+  const dx = s[2] - s[0], dy = s[3] - s[1], L2 = dx * dx + dy * dy || 1, t = clamp(((x - s[0]) * dx + (y - s[1]) * dy) / L2, 0, 1);
+  return Math.hypot(x - s[0] - dx * t, y - s[1] - dy * t);
+}
+function castRay(x, y, ax, ay, r, segs) {
+  let best = r;
+  for (const [x1, y1, x2, y2] of segs) {
+    const sx = x2 - x1, sy = y2 - y1, den = ax * sy - ay * sx;
+    if (Math.abs(den) < 1e-9) continue;
+    const t = ((x1 - x) * sy - (y1 - y) * sx) / den, u = ((x1 - x) * ay - (y1 - y) * ax) / den;
+    if (t > 1e-4 && u >= 0 && u <= 1 && t < best) best = t;
+  }
+  return best;
+}
+function visPath(segs, x, y, dir, ang, r) {
+  const near = segs.filter(s => segDist(x, y, s) < r);
+  if (!near.length) return wedge(x, y, dir, ang, r);
+  const full = ang >= 359, a0 = full ? dir - 180 : dir - ang / 2, a1 = full ? dir + 180 : dir + ang / 2, angs = [];
+  for (let a = a0; a < a1; a += 2) angs.push(a);
+  angs.push(a1);
+  for (const s of near) for (const [px, py] of [[s[0], s[1]], [s[2], s[3]]]) {
+    if (Math.hypot(px - x, py - y) > r) continue;
+    const a = deg(Math.atan2(py - y, px - x));
+    for (const d of [-.04, .04]) { let b = a + d; while (b < a0) b += 360; while (b > a0 + 360) b -= 360; if (b <= a1) angs.push(b); }
+  }
+  angs.sort((p, q) => p - q);
+  const pts = angs.map(a => { const ax = Math.cos(rad(a)), ay = Math.sin(rad(a)), t = castRay(x, y, ax, ay, r, near); return (x + ax * t).toFixed(3) + ' ' + (y + ay * t).toFixed(3); });
+  return (full ? 'M' : `M${x} ${y}L`) + pts.join('L') + 'Z';
+}
+
 function pill(x, y, s, size, bg, fg) {
   s = String(s); const w = s.length * size * .56 + size * 1.1, h = size * 1.7;
   return `<rect x="${(x - w / 2).toFixed(3)}" y="${(y - h / 2).toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}" rx="${(h / 2).toFixed(3)}" fill="${bg}"/><text x="${x.toFixed(3)}" y="${(y + size * .36).toFixed(3)}" font-size="${size}" font-family="${FONT}" text-anchor="middle" fill="${fg}" font-weight="500">${esc(s)}</text>`;
@@ -324,16 +400,17 @@ function planSVG(sc, o) {
     const src = (o.photos || S.proj?.photos || {})[p.bg.ph];
     if (src) out += `<image href="${src}" x="${p.bg.x}" y="${p.bg.y}" width="${p.bg.w}" height="${p.bg.h}" opacity="${p.bg.op ?? .6}" preserveAspectRatio="none"/>`;
   }
-  // light & camera cones
+  // light & camera cones (blocked by walls, through openings)
   let cones = '';
+  const segs = occluders(p);
   for (const it of p.items) {
     if (it.cat === 'light' || (it.type === 'window' && it.sun)) {
       const c = it.type === 'window' ? kColor(it.k) : lightColor(it), dim = (it.dim ?? 100) / 100, r = +it.reach || 3;
       defs += `<radialGradient id="lg${it.id}" gradientUnits="userSpaceOnUse" cx="${it.x}" cy="${it.y}" r="${r}"><stop offset="0" stop-color="${c}" stop-opacity="${(.62 * dim).toFixed(2)}"/><stop offset=".55" stop-color="${c}" stop-opacity="${(.3 * dim).toFixed(2)}"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient>`;
-      cones += `<path d="${wedge(it.x, it.y, it.rot, +it.beam || 60, r)}" fill="url(#lg${it.id})"/>`;
+      cones += `<path d="${visPath(segs, it.x, it.y, it.rot || 0, +it.beam || 60, r)}" fill="url(#lg${it.id})"/>`;
     } else if (it.type === 'camera') {
       const on = o.activeCam ? o.activeCam === it.id : true, r = +it.reach || 4, c = it.color || CAM_COLORS[0];
-      cones += `<path d="${wedge(it.x, it.y, it.rot, hfov(it), r)}" fill="${c}" fill-opacity="${on ? (o.activeCam ? .16 : .08) : .03}" stroke="${c}" stroke-opacity="${on ? .75 : .2}" stroke-width="${Math.max(.012, px * 1.3)}" stroke-dasharray="${on && o.activeCam ? 'none' : '.08 .06'}"/>`;
+      cones += `<path d="${visPath(segs, it.x, it.y, it.rot || 0, hfov(it), r)}" fill="${c}" fill-opacity="${on ? (o.activeCam ? .16 : .08) : .03}" stroke="${c}" stroke-opacity="${on ? .75 : .2}" stroke-width="${Math.max(.012, px * 1.3)}" stroke-dasharray="${on && o.activeCam ? 'none' : '.08 .06'}"/>`;
     }
   }
   out += cones;
@@ -1265,16 +1342,19 @@ function openLibrary(tab = 'brands') {
   let q = '';
   const showBrands = () => {
     const sc = S.libScale || 'mid', ql = q.toLowerCase();
-    const list = PRESETS.filter(p => (ql ? (p.brand + ' ' + p.model).toLowerCase().includes(ql) : p.scale === sc));
-    grid.innerHTML = list.map(p => `<button data-preset="${p.id}">${miniIcon(p.type)}<b>${esc(p.model)}</b><small>${esc(p.brand)} · ${p.watt >= 1000 ? (p.watt / 1000) + 'kW' : p.watt + 'W'} · ${p.mode === 'rgb' ? 'RGB' : p.mode === 'daylight' ? 'Daylight' : p.k === 3200 && p.watt >= 5000 ? 'Tungsten' : 'Bi-color'}</small></button>`).join('') || '<p class="muted">ไม่พบรุ่นนี้ ลองเพิ่มเองในชุดไฟของฉัน</p>';
+    const list = PRESETS.filter(p => S.libBrand ? p.brand === S.libBrand : ql ? (p.brand + ' ' + p.model).toLowerCase().includes(ql) : p.scale === sc);
+    grid.innerHTML = list.map(p => `<button data-preset="${p.id}">${miniIcon(p.type)}<b>${esc(p.model)}</b><small>${esc(p.brand)} · ${p.watt >= 1000 ? (p.watt / 1000) + 'kW' : p.watt + 'W'} · ${p.tungsten ? 'Tungsten' : p.mode === 'rgb' ? 'RGB' : p.mode === 'daylight' ? 'Daylight' : 'Bi-color'}</small></button>`).join('') || '<p class="muted">ไม่พบรุ่นนี้ ลองเพิ่มเองในชุดไฟของฉัน</p>';
   };
   const show = t => {
     $$('[data-lt]', m).forEach(b => b.classList.toggle('on', b.dataset.lt === t));
     top.innerHTML = '';
     if (t === 'brands') {
-      top.innerHTML = `<div class="seg" id="libScale">${SCALES.map(([k, n]) => `<button data-sc="${k}" class="${(S.libScale || 'mid') === k ? 'on' : ''}">${n}</button>`).join('')}</div><input class="libq" type="search" aria-label="ค้นหารุ่นไฟ" placeholder="ค้นหายี่ห้อ / รุ่น เช่น Aputure, SkyPanel" value="${esc(q)}">`;
-      $('#libScale', m).onclick = e => { const b = e.target.closest('[data-sc]'); if (!b) return; S.libScale = b.dataset.sc; q = ''; $('.libq', m).value = ''; $$('#libScale button', m).forEach(x => x.classList.toggle('on', x === b)); showBrands(); };
-      $('.libq', m).oninput = e => { q = e.target.value.trim(); showBrands(); };
+      top.innerHTML = `<div class="seg" id="libScale">${SCALES.map(([k, n]) => `<button data-sc="${k}" class="${!S.libBrand && (S.libScale || 'mid') === k ? 'on' : ''}">${n}</button>`).join('')}</div><input class="libq" type="search" aria-label="ค้นหารุ่นไฟ" placeholder="ค้นหา เช่น Ulanzi, SkyPanel" value="${esc(q)}">
+        <div class="brandrow" role="group" aria-label="ยี่ห้อ">${BRANDS.map(b => `<button type="button" data-br="${esc(b)}" class="${S.libBrand === b ? 'on' : ''}">${esc(b)}</button>`).join('')}</div>`;
+      const sync = () => { $$('#libScale button', m).forEach(x => x.classList.toggle('on', !S.libBrand && !q && x.dataset.sc === (S.libScale || 'mid'))); $$('[data-br]', m).forEach(x => x.classList.toggle('on', x.dataset.br === S.libBrand)); showBrands(); };
+      $('#libScale', m).onclick = e => { const b = e.target.closest('[data-sc]'); if (!b) return; S.libScale = b.dataset.sc; S.libBrand = null; q = ''; $('.libq', m).value = ''; sync(); };
+      $('.libq', m).oninput = e => { q = e.target.value.trim(); S.libBrand = null; sync(); };
+      $('.brandrow', m).onclick = e => { const b = e.target.closest('[data-br]'); if (!b) return; S.libBrand = S.libBrand === b.dataset.br ? null : b.dataset.br; q = ''; $('.libq', m).value = ''; sync(); };
       return showBrands();
     }
     if (t === 'kit') {
@@ -1291,7 +1371,7 @@ function openLibrary(tab = 'brands') {
     if (a) it = makeItem(a.dataset.add, x, y);
     else if (pr) {
       const p = PRESETS.find(z => z.id === pr.dataset.preset);
-      it = makeItem(p.type, x, y, { model: p.brand + ' ' + p.model, watt: p.watt, mode: p.mode, k: p.k });
+      it = makeItem(p.type, x, y, { model: p.brand + ' ' + p.model, watt: p.watt, mode: p.mode, k: p.k, ...p.extra });
     } else {
       const kd = S.kit.find(z => z.id === k.dataset.kit);
       it = makeItem(kd.type, x, y, { model: kd.model, watt: kd.watt, mode: kd.mode, k: kd.mode === 'daylight' ? 5600 : LIBMAP[kd.type].d.k });
@@ -1532,6 +1612,7 @@ function demoProject() {
   add('coffee', 0, .95, 90, { s: .7 });
   add('plant', 2.5, -2, 0); add('cabinet', 2.72, .6, 180);
   add('practical', 2.55, 1.9, 0, { label: 'โคมตั้งพื้น', k: 2700, watt: 40 });
+  add('hmi', .6, -4.4, 90, { label: 'Sun', model: 'ARRI M18 HMI', watt: 1800, beam: 34, reach: 8.5, dim: 80 });
   add('cob', 2.3, -1.55, 147, { label: 'Key', model: 'Aputure STORM 1200x', watt: 1200, mode: 'bicolor', k: 5600, dim: 70, gel: '¼ CTO', aim: guest.id });
   add('diffusion', 1.5, -.95, 145, { size: '8×8', fabric: '¼ Grid' });
   add('lantern', -2.1, -1.6, 37, { label: 'Fill', model: 'Aputure amaran 200x S', watt: 200, k: 4300, dim: 40 });
