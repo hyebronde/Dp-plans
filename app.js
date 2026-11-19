@@ -11,8 +11,8 @@ const r2 = v => Math.round(v * 100) / 100;
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
 const normDeg = d => ((d % 360) + 360) % 360;
 const clone = o => JSON.parse(JSON.stringify(o));
-const FONT = `'IBM Plex Sans Thai', Thonburi, 'Noto Sans Thai', 'Sarabun', system-ui, sans-serif`;
-const PAPER = '#fbfaf7', INK = '#1f1f23', SETF = '#ebe7df', SETS = '#4a4a50';
+const FONT = `Anuphan, 'IBM Plex Sans Thai', Thonburi, 'Noto Sans Thai', system-ui, sans-serif`;
+const PAPER = '#F6F3EC', INK = '#2B2B2E', SETF = '#ebe7df', SETS = '#4a4a50';
 const CAM_COLORS = ['#e5484d', '#2f7cf6', '#30a46c', '#8e4ec6', '#f76b15', '#0894b3'];
 const PEN_COLORS = ['#e5484d', '#2f7cf6', '#1c1c1f', '#f5a524', '#30a46c'];
 const PERSON_COLORS = ['#f5a524', '#e5484d', '#2f7cf6', '#30a46c', '#8e4ec6', '#8b8d98'];
@@ -48,10 +48,14 @@ const SHAPES = {
   monitor: () => `<rect x="-.05" y="-.26" width=".1" height=".52" rx=".02" fill="${INK}"/><rect x=".05" y="-.23" width=".02" height=".46" fill="#7fb8ff"/><circle cx="-.18" r=".06" fill="${INK}"/>`,
   talent: it => `<ellipse rx=".17" ry=".32" fill="${it.color || '#f5a524'}" opacity=".35"/><circle r=".2" fill="${it.color || '#f5a524'}" stroke="#fff" stroke-width=".03"/><path d="M.18-.09L.34 0L.18.09z" fill="${it.color || '#f5a524'}"/>`,
   crew: it => SHAPES.talent({ color: it.color || '#8b8d98' }),
+  softpanel: () => `<rect x="-.1" y="-.62" width=".14" height="1.24" rx=".03" fill="${INK}"/><rect x=".04" y="-.58" width=".04" height="1.16" fill="#eef2ff"/>`,
+  mat: () => `<rect x="-.03" y="-.6" width=".06" height="1.2" rx=".02" fill="#fff" stroke="${INK}" stroke-width=".02"/><path d="M-.03-.3H.03M-.03 0H.03M-.03.3H.03" stroke="${INK}" stroke-width=".01"/>`,
+  balloon: () => `<circle r=".6" fill="#fff" fill-opacity=".85" stroke="${INK}" stroke-width=".025" stroke-dasharray=".08 .05"/><circle r=".12" fill="${INK}"/>`,
+  spacelight: () => `<circle r=".36" fill="#fff" stroke="${INK}" stroke-width=".03"/><circle r=".24" fill="none" stroke="${INK}" stroke-width=".015" stroke-dasharray=".04 .03"/><circle r=".06" fill="${INK}"/>`,
   reflector: () => `<rect x="-.03" y="-.5" width=".06" height="1" rx=".02" fill="#fff" stroke="#8a8a90" stroke-width=".025"/><rect x=".03" y="-.48" width=".02" height=".96" fill="#d9d9de"/>`,
-  bounce: () => `<rect x="-.04" y="-.5" width=".08" height="1" fill="#fff" stroke="${SETS}" stroke-width=".02"/>`,
-  flag: () => `<rect x="-.04" y="-.5" width=".08" height="1" fill="#141416"/>`,
-  diffusion: () => `<rect x="-.03" y="-.6" width=".06" height="1.2" fill="#fff" fill-opacity=".7" stroke="${INK}" stroke-width=".02" stroke-dasharray=".06 .04"/>`,
+  bounce: it => frameShape(it), flag: it => frameShape(it), diffusion: it => frameShape(it),
+  neg: it => frameShape(it), net: it => frameShape(it), overhead: it => frameShape(it),
+  hazer: () => `<circle r=".75" fill="#c9c6c0" fill-opacity=".18" stroke="#8a8780" stroke-width=".015" stroke-dasharray=".06 .05"/><rect x="-.18" y="-.12" width=".3" height=".24" rx=".04" fill="${INK}"/><path d="M.12-.05h.12M.12.05h.12" stroke="${INK}" stroke-width=".03"/>`,
   cstand: () => `<path d="M0 0L.3 0M0 0L-.15.26M0 0L-.15-.26" stroke="${INK}" stroke-width=".035" stroke-linecap="round"/><circle r=".05" fill="${INK}"/>`,
   door: () => `<rect x="-.09" y="-.45" width=".18" height=".9" fill="${PAPER}"/><rect x="0" y="-.47" width=".9" height=".04" fill="${SETS}"/><path d="M.9-.45A.9.9 0 0 1 0 .45" fill="none" stroke="${SETS}" stroke-width=".015" stroke-dasharray=".05 .04"/><path d="M0-.45V.45" stroke="${SETS}" stroke-width=".02"/>`,
   window: () => `<rect x="-.09" y="-.6" width=".18" height="1.2" fill="${PAPER}"/><rect x="-.07" y="-.6" width=".14" height="1.2" fill="#dcecff" ${st(.02)}/><path d="M0-.6V.6" stroke="${SETS}" stroke-width=".015"/>`,
@@ -81,11 +85,19 @@ const LIB = [
   { cat: 'camera', type: 'monitor', name: 'มอนิเตอร์ / Video village', r: .27, d: {} },
   { cat: 'person', type: 'talent', name: 'นักแสดง / ตัวแบบ', r: .36, d: { role: 'talent', color: '#f5a524' } },
   { cat: 'person', type: 'crew', name: 'ทีมงาน', r: .36, d: { role: 'crew', color: '#8b8d98' } },
+  { cat: 'light', type: 'softpanel', name: 'Soft panel (แบบ SkyPanel)', r: .64, d: { beam: 110, reach: 5, watt: 450, mode: 'bicolor', k: 5600, dim: 100, mod: '—' } },
+  { cat: 'light', type: 'mat', name: 'Flex mat (แผ่นไฟอ่อน)', r: .62, d: { beam: 120, reach: 3, watt: 200, mode: 'bicolor', k: 3200, dim: 100, mod: 'Softbox' } },
+  { cat: 'light', type: 'spacelight', name: 'Space light / China ball', r: .38, d: { beam: 360, reach: 3.5, watt: 300, mode: 'bicolor', k: 3200, dim: 100, mod: 'Lantern' } },
+  { cat: 'light', type: 'balloon', name: 'Balloon light', r: .62, d: { beam: 360, reach: 9, watt: 2000, mode: 'bicolor', k: 4300, dim: 100, mod: '—' } },
+  { cat: 'grip', type: 'diffusion', name: 'Diffusion frame', r: .62, d: { size: '8×8', fabric: '¼ Grid' } },
+  { cat: 'grip', type: 'overhead', name: 'Butterfly / Overhead (แนวนอน)', r: 1.9, d: { size: '12×12', fabric: 'Full Silk' } },
+  { cat: 'grip', type: 'bounce', name: 'Bounce frame', r: .52, d: { size: '4×4', fabric: 'Ultrabounce' } },
+  { cat: 'grip', type: 'neg', name: 'Neg fill', r: .62, d: { size: '4×8', fabric: 'Solid / Duvetyne' } },
+  { cat: 'grip', type: 'flag', name: 'Flag / Cutter', r: .52, d: { size: '24×36 in', fabric: 'Solid / Duvetyne' } },
+  { cat: 'grip', type: 'net', name: 'Net (หรี่แสง)', r: .52, d: { size: '24×36 in', fabric: 'Double net' } },
   { cat: 'grip', type: 'reflector', name: 'Reflector', r: .52, d: {} },
-  { cat: 'grip', type: 'bounce', name: 'Bounce board', r: .52, d: {} },
-  { cat: 'grip', type: 'flag', name: 'Flag / Neg fill', r: .52, d: {} },
-  { cat: 'grip', type: 'diffusion', name: 'Diffusion frame', r: .62, d: {} },
   { cat: 'grip', type: 'cstand', name: 'C-stand', r: .32, d: {} },
+  { cat: 'grip', type: 'hazer', name: 'Hazer / Fog', r: .75, d: {} },
   { cat: 'set', type: 'door', name: 'ประตู', r: .95, d: {} },
   { cat: 'set', type: 'window', name: 'หน้าต่าง (แสงธรรมชาติ)', r: .62, d: { sun: true, k: 5600, beam: 110, reach: 4 } },
   { cat: 'set', type: 'chair', name: 'เก้าอี้', r: .32, d: {} },
@@ -101,7 +113,66 @@ const LIB = [
   { cat: 'set', type: 'cabinet', name: 'ตู้ / ชั้น', r: .56, d: {} },
 ];
 const LIBMAP = Object.fromEntries(LIB.map(d => [d.type, d]));
-const LIB_TABS = [['light', 'ไฟ'], ['kit', 'ชุดไฟของฉัน'], ['camera', 'กล้อง'], ['person', 'คน'], ['grip', 'กริป'], ['set', 'ฉาก / พร็อพ']];
+const FRAME_TYPES = ['diffusion', 'overhead', 'bounce', 'neg', 'flag', 'net'];
+const FRAME_SIZES = ['18×24 in', '24×36 in', '24×72 in', '4×4', '4×8', '6×6', '8×8', '12×12', '12×20', '20×20'];
+const FABRICS = {
+  diff: ['Half Soft Frost', 'Hilight', 'Light Grid', '¼ Grid', '½ Grid', 'Full Grid', 'Full Silk', 'Magic Cloth'],
+  bounce: ['Ultrabounce', 'Muslin (bleached)', 'Muslin (unbleached)', 'Silver lamé', 'Gold lamé', 'Griffolyn'],
+  neg: ['Solid / Duvetyne', 'Black Ultrabounce'],
+  net: ['Single net', 'Double net', 'Silk net', 'Lavender net'],
+};
+const FABRIC_STYLE = { diff: ['#C59BE8', .35, '#8E6BE8'], bounce: ['#ffffff', .95, '#FF8A2B'], neg: ['#1C1C1F', 1, '#1C1C1F'], net: ['#6b6866', .25, '#4a4846'] };
+const fabricCat = f => Object.keys(FABRICS).find(k => FABRICS[k].includes(f)) || 'diff';
+function frameDims(size) {
+  const m = String(size || '4×4').match(/([\d.]+)\s*[×x]\s*([\d.]+)\s*(in)?/);
+  if (!m) return [1.22, 1.22];
+  const u = m[3] ? .0254 : .3048;
+  return [+m[1] * u, +m[2] * u];
+}
+function frameShape(it) {
+  const [a, b] = frameDims(it.size), [f, op, s] = FABRIC_STYLE[fabricCat(it.fabric)];
+  const dash = f === '#1C1C1F' || f === '#ffffff' ? '' : 'stroke-dasharray=".08 .05"';
+  if (it.type === 'overhead') return `<rect x="${-b / 2}" y="${-a / 2}" width="${b}" height="${a}" fill="${f}" fill-opacity="${op}" stroke="${s}" stroke-width=".04" ${dash}/><path d="M${-b / 2} ${-a / 2}L${b / 2} ${a / 2}M${b / 2} ${-a / 2}L${-b / 2} ${a / 2}" stroke="${s}" stroke-width=".015" opacity=".5"/>`;
+  return `<rect x="-.045" y="${-a / 2}" width=".09" height="${a}" fill="${f}" fill-opacity="${op}" stroke="${s}" stroke-width=".03" ${dash}/>`;
+}
+function itemR(it) {
+  if (FRAME_TYPES.includes(it.type)) { const [a, b] = frameDims(it.size); return (it.type === 'overhead' ? Math.hypot(a, b) : a) / 2 + .05; }
+  return (LIBMAP[it.type]?.r || .4) * (it.s || 1);
+}
+const GELS = [['—', 0], ['¼ CTO', 42], ['½ CTO', 81], ['Full CTO', 159], ['¼ CTB', -30], ['½ CTB', -68], ['Full CTB', -131], ['Plus Green', 0], ['Minus Green', 0], ['ND .3', 0], ['ND .6', 0], ['ND .9', 0], ['Deep Blue', null], ['Red / Magenta', null]];
+function effK(it) {
+  const base = it.mode === 'daylight' ? 5600 : (+it.k || 5600);
+  const g = GELS.find(x => x[0] === it.gel);
+  return g && g[1] ? Math.round(1e6 / (1e6 / base + g[1]) / 50) * 50 : base;
+}
+// Brand presets by production size: researched lineups (verify specs before a real job)
+const PRESETS = [
+  ['small', 'Aputure amaran', '100x S', 'cob', 100, 'bicolor'], ['small', 'Aputure amaran', '200x S', 'cob', 200, 'bicolor'],
+  ['small', 'Aputure amaran', '300c', 'cob', 300, 'rgb'], ['small', 'Aputure amaran', 'PT4c', 'tube', 50, 'rgb'],
+  ['small', 'Aputure amaran', 'F21c (mat)', 'mat', 100, 'rgb'], ['small', 'SmallRig', 'RC 60B', 'cob', 60, 'bicolor'],
+  ['small', 'SmallRig', 'RC 120B', 'cob', 120, 'bicolor'], ['small', 'SmallRig', 'RC 220B', 'cob', 220, 'bicolor'],
+  ['small', 'SmallRig', 'RC 450B', 'cob', 450, 'bicolor'], ['small', 'SmallRig', 'RM120 (panel)', 'panel', 12, 'rgb'],
+  ['small', 'Godox', 'SL60IIBi', 'cob', 60, 'bicolor'], ['small', 'Godox', 'UL150 II', 'cob', 150, 'daylight'],
+  ['small', 'Godox', 'TL60 (tube)', 'tube', 20, 'rgb'], ['small', 'Nanlite', 'Forza 60B II', 'fresnel', 60, 'bicolor'],
+  ['small', 'Nanlite', 'PavoTube II 30X', 'tube', 36, 'rgb'], ['small', 'Nanlite', 'FS-200B', 'cob', 200, 'bicolor'],
+  ['mid', 'Aputure', 'LS 600d Pro', 'cob', 600, 'daylight'], ['mid', 'Aputure', 'LS 600c Pro II', 'cob', 600, 'rgb'],
+  ['mid', 'Aputure', 'STORM 1200x', 'cob', 1200, 'bicolor'], ['mid', 'Aputure', 'STORM 1000c', 'cob', 1000, 'rgb'],
+  ['mid', 'Aputure', 'Nova P600c', 'softpanel', 600, 'rgb'], ['mid', 'Aputure', 'INFINIBAR PB12', 'tube', 100, 'rgb'],
+  ['mid', 'Nanlite', 'Forza 500B II', 'fresnel', 500, 'bicolor'], ['mid', 'Nanlite', 'FC-720B', 'cob', 750, 'bicolor'],
+  ['mid', 'Nanlux', 'Evoke 600C', 'cob', 600, 'rgb'], ['mid', 'Nanlux', 'Evoke 150C', 'fresnel', 150, 'rgb'],
+  ['mid', 'Astera', 'Titan Tube', 'tube', 72, 'rgb'], ['mid', 'Astera', 'Helios Tube', 'tube', 36, 'rgb'],
+  ['mid', 'Quasar Science', 'Double Rainbow 4ft', 'tube', 100, 'rgb'], ['mid', 'Litepanels', 'Gemini 2×1', 'softpanel', 350, 'rgb'],
+  ['big', 'ARRI', 'SkyPanel S60-C', 'softpanel', 450, 'rgb'], ['big', 'ARRI', 'SkyPanel S360-C', 'softpanel', 1500, 'rgb'],
+  ['big', 'ARRI', 'SkyPanel X', 'softpanel', 1600, 'rgb'], ['big', 'ARRI', 'Orbiter', 'fresnel', 500, 'rgb'],
+  ['big', 'ARRI', 'L10-C', 'fresnel', 510, 'rgb'], ['big', 'ARRI', 'M18 HMI', 'hmi', 1800, 'daylight'],
+  ['big', 'ARRI', 'M40 HMI', 'hmi', 4000, 'daylight'], ['big', 'ARRI', 'M90 HMI', 'hmi', 9000, 'daylight'],
+  ['big', 'ARRI', 'ARRIMAX 18/12', 'hmi', 18000, 'daylight'], ['big', 'Aputure', 'Electro Storm XT26', 'fresnel', 2600, 'bicolor'],
+  ['big', 'Aputure', 'Electro Storm CS15', 'fresnel', 1500, 'rgb'], ['big', 'Creamsource', 'Vortex24', 'softpanel', 1300, 'rgb'],
+  ['big', 'Kino Flo', 'FreeStyle 41', 'tube', 200, 'rgb'], ['big', 'Mole-Richardson', '10K Tener', 'fresnel', 10000, 'tungsten'],
+  ['big', 'Mole-Richardson', 'Molebeam 10K', 'par', 10000, 'tungsten'], ['big', 'Airstar', 'Balloon 4K', 'balloon', 4000, 'bicolor'],
+].map(([scale, brand, model, type, watt, mode], i) => ({ id: 'p' + i, scale, brand, model, type, watt, mode: mode === 'tungsten' ? 'bicolor' : mode, k: mode === 'tungsten' ? 3200 : mode === 'daylight' ? 5600 : LIBMAP[type].d.k }));
+const SCALES = [['small', 'เล็ก · Creator'], ['mid', 'กลาง · โฆษณา'], ['big', 'ใหญ่ · Studio']];
+const LIB_TABS = [['brands', 'รุ่นไฟตามขนาดกอง'], ['light', 'ประเภทไฟ'], ['kit', 'ชุดไฟของฉัน'], ['grip', 'กริป & ผ้า'], ['camera', 'กล้อง'], ['person', 'คน'], ['set', 'ฉาก / พร็อพ']];
 const DEFAULT_KIT = [
   { id: 'k1', model: 'Aputure 600d', type: 'cob', watt: 600, mode: 'daylight' },
   { id: 'k2', model: 'Amaran 200x', type: 'cob', watt: 200, mode: 'bicolor' },
@@ -138,6 +209,7 @@ const S = {
   projects: [], kit: clone(DEFAULT_KIT), proj: null, scene: null,
   sel: null, tool: 'select', view: { x: 0, y: 0, z: 60 }, tab: 'shots', labels: true,
   activeShot: null, pen: PEN_COLORS[0], preview: null, undo: [], redo: [],
+  snaps: { ends: true, angle: true, openings: true, furniture: true },
 };
 let saveTimer = null;
 function save() {
@@ -178,7 +250,21 @@ function findSel() {
 const cams = (sc = S.scene) => sc.plan.items.filter(i => i.type === 'camera');
 const lights = (sc = S.scene) => sc.plan.items.filter(i => i.cat === 'light');
 const hfov = it => 2 * deg(Math.atan((SENSORS[it.sensor] || SENSORS.ff)[1] / (2 * Math.max(4, +it.lens || 35))));
-function lightColor(it) { return it.mode === 'rgb' ? (it.color || '#c86bff') : kColor(it.mode === 'daylight' ? 5600 : it.k); }
+function lightColor(it) {
+  if (it.gel === 'Deep Blue') return '#4a63f0';
+  if (it.gel === 'Red / Magenta') return '#ff4f9a';
+  return it.mode === 'rgb' ? (it.color || '#c86bff') : kColor(effK(it));
+}
+const kText = it => it.mode === 'rgb' ? 'RGB' : effK(it) + 'K';
+// Aim lock: a light or camera with `aim` keeps pointing at that item
+function applyAims(sc) {
+  for (const it of sc.plan.items) {
+    if (!it.aim) continue;
+    const t = sc.plan.items.find(x => x.id === it.aim);
+    if (!t) { delete it.aim; continue; }
+    if (Math.hypot(t.x - it.x, t.y - it.y) > .05) it.rot = Math.round(normDeg(deg(Math.atan2(t.y - it.y, t.x - it.x))));
+  }
+}
 function itemName(it) {
   if (it.cat === 'light') return it.label || it.model || LIBMAP[it.type].name;
   if (it.type === 'camera') return (it.label || 'Cam') + (it.body ? ' · ' + it.body : '');
@@ -220,7 +306,12 @@ function smoothPath(pts) {
 }
 const txt = (x, y, s, size, extra = '') => `<text x="${x.toFixed(3)}" y="${y.toFixed(3)}" font-size="${size}" font-family="${FONT}" text-anchor="middle" ${/\bfill=/.test(extra) ? '' : `fill="${INK}"`} stroke="${PAPER}" stroke-width="${size * .28}" paint-order="stroke" stroke-linejoin="round" ${extra}>${esc(s)}</text>`;
 
+function pill(x, y, s, size, bg, fg) {
+  s = String(s); const w = s.length * size * .56 + size * 1.1, h = size * 1.7;
+  return `<rect x="${(x - w / 2).toFixed(3)}" y="${(y - h / 2).toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}" rx="${(h / 2).toFixed(3)}" fill="${bg}"/><text x="${x.toFixed(3)}" y="${(y + size * .36).toFixed(3)}" font-size="${size}" font-family="${FONT}" text-anchor="middle" fill="${fg}" font-weight="500">${esc(s)}</text>`;
+}
 function planSVG(sc, o) {
+  applyAims(sc);
   const p = sc.plan, px = o.px, edit = !!o.edit;
   let defs = PEN_COLORS.map(c => `<marker id="ar${c.slice(1)}" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.6" markerHeight="3.6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join('');
   let out = '';
@@ -247,13 +338,16 @@ function planSVG(sc, o) {
   }
   out += cones;
   // walls
+  const block = (o.wallStyle || S.proj?.wallStyle) === 'block';
   for (const w of p.walls) {
-    out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${INK}" stroke-width="${w.t || .12}" stroke-linecap="square"/>`;
+    const t = w.t || .12;
+    if (block) out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="#6A6866" stroke-width="${t + .03}" stroke-linecap="square"/><line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${PAPER}" stroke-width="${t * .5}" stroke-dasharray=".32 .05"/>`;
+    else out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${INK}" stroke-width="${t}" stroke-linecap="square"/>`;
   }
   // items
   for (const it of p.items) {
     const def = LIBMAP[it.type]; if (!def) continue;
-    const hitR = Math.max(def.r * (it.s || 1), 20 * px);
+    const hitR = Math.max(itemR(it), 20 * px);
     out += `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0}) scale(${it.s || 1})">${edit ? `<circle r="${hitR / (it.s || 1)}" fill="transparent"/>` : ''}${SHAPES[it.type](it)}</g>`;
   }
   // drawings
@@ -269,16 +363,20 @@ function planSVG(sc, o) {
     const c = d.color || PEN_COLORS[0];
     out += `<g data-draw="${d.id}"><path d="${smoothPath(d.pts)}" fill="none" stroke="transparent" stroke-width="${Math.max(.2, 22 * px)}"/><path d="${smoothPath(d.pts)}" fill="none" stroke="${c}" stroke-width="${d.type === 'arrow' ? .045 : .03}" stroke-linecap="round" stroke-linejoin="round" ${d.type === 'arrow' ? `marker-end="url(#ar${c.slice(1)})"` : ''}/></g>`;
   }
-  // labels
+  // labels: DP diagram style (role, model in a dark pill, then K · W)
   if (o.labels) {
     for (const it of p.items) {
       const def = LIBMAP[it.type]; if (!def) continue;
-      const y = it.y + def.r * (it.s || 1) + .2;
+      const y = it.y + itemR(it) + .2;
       if (it.cat === 'light') {
-        out += txt(it.x, y, itemName(it), .17, 'font-weight="600"');
-        out += txt(it.x, y + .19, `${it.watt || 0}W · ${it.mode === 'rgb' ? 'RGB' : (it.mode === 'daylight' ? 5600 : it.k) + 'K'}${(it.dim ?? 100) < 100 ? ' · ' + it.dim + '%' : ''}`, .14, 'fill="#6b6860"');
+        let yy = y;
+        if (it.label) { out += txt(it.x, yy, it.label, .15, 'fill="#5b5a55" font-weight="500"'); yy += .2; }
+        out += pill(it.x, yy - .05, it.model || def.name, .15, '#2B2B2E', '#fff'); yy += .27;
+        out += txt(it.x, yy, `${kText(it)} · ${it.watt || 0}W${(it.dim ?? 100) < 100 ? ' · ' + it.dim + '%' : ''}${it.gel && it.gel !== '—' ? ' · ' + it.gel : ''}`, .13, 'fill="#5b5a55"');
       } else if (it.type === 'camera') {
-        out += txt(it.x, y, `${it.label || 'Cam'} · ${it.lens || 35}mm`, .18, `font-weight="700" fill="${it.color}"`);
+        out += pill(it.x, y - .05, `${it.label || 'Cam'}${it.body ? ' · ' + it.body : ''} · ${it.lens || 35}mm`, .15, it.color || '#E5D6FF', '#fff');
+      } else if (FRAME_TYPES.includes(it.type)) {
+        out += txt(it.x, y, `${it.size} · ${it.fabric}`, .14, `fill="${FABRIC_STYLE[fabricCat(it.fabric)][2]}" font-weight="600"`);
       } else if (it.cat === 'person' || it.label) {
         out += txt(it.x, y, itemName(it), .17, 'font-weight="600"');
       }
@@ -286,10 +384,10 @@ function planSVG(sc, o) {
   }
   // edit overlays: selection + previews
   if (edit) {
-    const ac = '#ff5a4e', sw = 2 * px;
+    const ac = '#7B5CE0', sw = 2 * px;
     const s = S.sel && findSel();
     if (s && S.sel.t === 'item') {
-      const def = LIBMAP[s.type], r = def.r * (s.s || 1) + .12, hr = r + .32, a = rad(s.rot || 0);
+      const r = itemR(s) + .12, hr = r + .32, a = rad(s.rot || 0);
       const hx = s.x + Math.cos(a) * hr, hy = s.y + Math.sin(a) * hr;
       out += `<circle cx="${s.x}" cy="${s.y}" r="${r}" fill="none" stroke="${ac}" stroke-width="${sw}" stroke-dasharray="${6 * px} ${4 * px}"/>`;
       out += `<line x1="${s.x + Math.cos(a) * r}" y1="${s.y + Math.sin(a) * r}" x2="${hx}" y2="${hy}" stroke="${ac}" stroke-width="${sw}"/>`;
@@ -315,7 +413,11 @@ function planSVG(sc, o) {
       } else if (pv.type === 'stroke' && pv.pts.length > 1) {
         out += `<path d="${smoothPath(pv.pts)}" fill="none" stroke="${pv.color}" stroke-width="${pv.arrow ? .045 : .03}" stroke-linecap="round" ${pv.arrow ? `marker-end="url(#ar${pv.color.slice(1)})"` : ''}/>`;
       }
-      if (pv.snapPt) out += `<circle cx="${pv.snapPt[0]}" cy="${pv.snapPt[1]}" r="${9 * px}" fill="none" stroke="${ac}" stroke-width="${sw}"/>`;
+      if (pv.snapPt) {
+        out += `<circle cx="${pv.snapPt[0]}" cy="${pv.snapPt[1]}" r="${16 * px}" fill="#E5D6FF" fill-opacity=".55" stroke="${ac}" stroke-width="${sw}"/><circle cx="${pv.snapPt[0]}" cy="${pv.snapPt[1]}" r="${4 * px}" fill="${ac}"/>`;
+        if (pv.snapKind) out += txt(pv.snapPt[0], pv.snapPt[1] - 26 * px, pv.snapKind, 13 * px, `fill="${ac}" font-weight="700"`);
+      }
+      if (pv.type === 'wall' && pv.ang != null) out += txt(pv.b[0] + 18 * px, pv.b[1] + 30 * px, pv.ang + '°', 12 * px, 'fill="#5b5a55" font-weight="600"');
     }
   }
   return `<defs>${defs}</defs>` + out;
@@ -327,8 +429,7 @@ function sceneBBox(sc, pad = .6) {
   const p = sc.plan;
   p.walls.forEach(w => { add(...w.a, .1); add(...w.b, .1); });
   p.items.forEach(it => {
-    const r = (LIBMAP[it.type]?.r || .4) * (it.s || 1);
-    add(it.x, it.y, r + .5);
+    add(it.x, it.y, itemR(it) + .5);
   });
   p.draws.forEach(d => d.pts.forEach(pt => add(pt[0], pt[1], .3)));
   if (p.bg) { add(p.bg.x, p.bg.y); add(p.bg.x + p.bg.w, p.bg.y + p.bg.h); }
@@ -401,7 +502,7 @@ const TOOLS = [
   { id: 'labels', t: 'แสดง / ซ่อนป้ายชื่อ', act: () => { S.labels = !S.labels; renderTools(); render(); } },
 ];
 const HINTS = {
-  wall: 'ลากเพื่อวาดผนัง · ปลายผนังจะดูดติดกันและล็อกมุม 45°',
+  wall: 'ลากเพื่อวาดผนัง · ปลายดูดติดกัน ต่อแบบ T ได้ · ลากกลับจุดเริ่มเพื่อปิดห้อง',
   arrow: 'ลากเพื่อวาดเส้นการเดินของนักแสดง / การเคลื่อนกล้อง',
   pen: 'วาดโน้ตด้วยมือได้อิสระ',
   dim: 'ลากเพื่อวัดระยะ (เมตร)',
@@ -431,18 +532,63 @@ let op = null, pinch = null;
 function toWorld(cx, cy) { const r = svg.getBoundingClientRect(); return [(cx - r.left - S.view.x) / S.view.z, (cy - r.top - S.view.y) / S.view.z]; }
 function local(cx, cy) { const r = svg.getBoundingClientRect(); return [cx - r.left, cy - r.top]; }
 function wallEnds(exclude) { const pts = []; P().walls.forEach(w => { if (w.id !== exclude) pts.push(w.a, w.b); }); return pts; }
+const BACK = { chair: .27, armchair: .4, sofa: .45, desk: .35, bed: 1, cabinet: .25, tv: .16, table: .45 };
+function wallDegree(p) { return P().walls.reduce((n, w) => n + (Math.hypot(w.a[0] - p[0], w.a[1] - p[1]) < .01 || Math.hypot(w.b[0] - p[0], w.b[1] - p[1]) < .01 ? 1 : 0), 0); }
+function nearestOnWall(p, exclude) {
+  let best = null;
+  for (const w of P().walls) {
+    if (w.id === exclude) continue;
+    const dx = w.b[0] - w.a[0], dy = w.b[1] - w.a[1], L2 = dx * dx + dy * dy || 1;
+    const t = clamp(((p[0] - w.a[0]) * dx + (p[1] - w.a[1]) * dy) / L2, 0, 1);
+    const q = [w.a[0] + dx * t, w.a[1] + dy * t], d = Math.hypot(p[0] - q[0], p[1] - q[1]);
+    if (!best || d < best.d) best = { w, q, d, t, ang: deg(Math.atan2(dy, dx)) };
+  }
+  return best;
+}
+let lastSnapKey = '';
+function buzz(key) { if (key && key !== lastSnapKey) { try { navigator.vibrate && navigator.vibrate(8); } catch { } } lastSnapKey = key || ''; }
+// Magnet for wall points: endpoints first, then T-junction on a wall, then grid + angle lock
 function snapPoint(w, from, exclude) {
-  const tol = 14 / S.view.z;
-  let best = null, bd = tol;
-  for (const p of wallEnds(exclude)) { const d = Math.hypot(p[0] - w[0], p[1] - w[1]); if (d < bd) { bd = d; best = p; } }
-  if (best) return { pt: [best[0], best[1]], snapped: true };
+  const tol = 16 / S.view.z, M = S.snaps;
+  if (M.ends) {
+    let best = null, bd = tol;
+    for (const p of wallEnds(exclude)) { const d = Math.hypot(p[0] - w[0], p[1] - w[1]); if (d < bd) { bd = d; best = p; } }
+    if (best) {
+      const closes = from && wallDegree(best) === 1 && wallDegree(from) >= 1 && Math.hypot(best[0] - from[0], best[1] - from[1]) > .05;
+      buzz('e' + best);
+      return { pt: [best[0], best[1]], snapped: true, kind: closes ? 'ปิดห้อง ✓' : 'ดูดติด' };
+    }
+    const n = nearestOnWall(w, exclude);
+    if (n && n.d < tol * .8 && n.t > .02 && n.t < .98) { buzz('t' + n.w.id); return { pt: [r2(n.q[0]), r2(n.q[1])], snapped: true, kind: 'ต่อผนัง (T)' }; }
+  }
+  buzz('');
   let p = [Math.round(w[0] * 20) / 20, Math.round(w[1] * 20) / 20];
-  if (from) {
+  if (from && M.angle) {
     const ang = deg(Math.atan2(p[1] - from[1], p[0] - from[0])), len = Math.hypot(p[0] - from[0], p[1] - from[1]);
     const near = Math.round(ang / 45) * 45;
-    if (Math.abs(ang - near) < 7) p = [r2(from[0] + Math.cos(rad(near)) * len), r2(from[1] + Math.sin(rad(near)) * len)];
+    if (Math.abs(ang - near) < 7) p = [r2(from[0] + Math.cos(rad(near)) * Math.round(len * 20) / 20), r2(from[1] + Math.sin(rad(near)) * Math.round(len * 20) / 20)];
   }
   return { pt: p, snapped: false };
+}
+// Magnet for items: doors/windows sit in the wall, furniture backs onto it
+function magnetItem(it) {
+  const M = S.snaps, opening = it.type === 'door' || it.type === 'window';
+  if (opening ? !M.openings : !(M.furniture && BACK[it.type])) return null;
+  const n = nearestOnWall([it.x, it.y]); if (!n) return null;
+  const t = n.w.t || .12;
+  if (opening) {
+    if (n.d > .45) return null;
+    const c1 = normDeg(n.ang - 90), c2 = normDeg(n.ang + 90), cur = normDeg(it.rot || 0);
+    const dd = a => Math.min(Math.abs(a - cur), 360 - Math.abs(a - cur));
+    it.x = r2(n.q[0]); it.y = r2(n.q[1]); it.rot = dd(c1) <= dd(c2) ? c1 : c2;
+    return { pt: n.q, kind: 'เข้าผนัง' };
+  }
+  const back = BACK[it.type] * (it.s || 1);
+  if (n.d > back + .35 || n.d < .01) return null;
+  const nx = (it.x - n.q[0]) / n.d, ny = (it.y - n.q[1]) / n.d;
+  it.rot = Math.round(normDeg(deg(Math.atan2(ny, nx))));
+  it.x = r2(n.q[0] + nx * (back + t / 2)); it.y = r2(n.q[1] + ny * (back + t / 2));
+  return { pt: n.q, kind: 'ชิดผนัง' };
 }
 function selectThing(sel) {
   const changed = JSON.stringify(sel) !== JSON.stringify(S.sel);
@@ -519,9 +665,17 @@ svg.addEventListener('pointermove', e => {
   const s = findSel();
   switch (op.kind) {
     case 'pan': S.view.x = op.v.x + e.clientX - op.cx; S.view.y = op.v.y + e.clientY - op.cy; break;
-    case 'move': if (first) snap(); s.x = r2(w[0] - op.off[0]); s.y = r2(w[1] - op.off[1]); break;
+    case 'move': {
+      if (first) snap();
+      s.x = r2(w[0] - op.off[0]); s.y = r2(w[1] - op.off[1]);
+      const m = magnetItem(s);
+      S.preview = m ? { type: 'none', snapPt: m.pt, snapKind: m.kind } : null;
+      buzz(m ? m.kind + s.id : '');
+      break;
+    }
     case 'rot': {
       if (first) snap();
+      delete s.aim;
       let a = deg(Math.atan2(w[1] - s.y, w[0] - s.x));
       const n = Math.round(a / 15) * 15; if (Math.abs(a - n) < 4) a = n;
       s.rot = Math.round(normDeg(a)); break;
@@ -529,7 +683,7 @@ svg.addEventListener('pointermove', e => {
     case 'wallEnd': {
       if (first) snap();
       const other = op.end === 'a' ? s.b : s.a, r = snapPoint(w, other, s.id);
-      s[op.end] = r.pt; S.preview = r.snapped ? { type: 'none', snapPt: r.pt } : null; break;
+      s[op.end] = r.pt; S.preview = r.snapped ? { type: 'none', snapPt: r.pt, snapKind: r.kind } : null; break;
     }
     case 'moveWall': {
       if (first) snap();
@@ -543,7 +697,8 @@ svg.addEventListener('pointermove', e => {
     }
     case 'wall': case 'dim': case 'calib': {
       const r = snapPoint(w, op.a);
-      S.preview = { type: op.kind, a: op.a, b: r.pt, snapPt: r.snapped ? r.pt : null }; break;
+      const ang = Math.round(normDeg(deg(Math.atan2(r.pt[1] - op.a[1], r.pt[0] - op.a[0]))));
+      S.preview = { type: op.kind, a: op.a, b: r.pt, snapPt: r.snapped ? r.pt : null, snapKind: r.kind, ang: op.kind === 'wall' ? ang : null }; break;
     }
     case 'stroke': {
       const pts = S.preview.pts, l = pts[pts.length - 1];
@@ -562,7 +717,7 @@ function endPointer(e) {
   const o = op; op = null;
   const pv = S.preview;
   if (o.kind === 'wall' && pv) {
-    if (Math.hypot(pv.b[0] - pv.a[0], pv.b[1] - pv.a[1]) >= .1) { snap(); P().walls.push({ id: uid(), a: pv.a, b: pv.b, t: .12 }); save(); }
+    if (Math.hypot(pv.b[0] - pv.a[0], pv.b[1] - pv.a[1]) >= .1) { snap(); P().walls.push({ id: uid(), a: pv.a, b: pv.b, t: .12 }); save(); if (pv.snapKind === 'ปิดห้อง ✓') toast('ปิดห้องแล้ว'); }
     S.preview = null;
   } else if (o.kind === 'dim' && pv) {
     if (Math.hypot(pv.b[0] - pv.a[0], pv.b[1] - pv.a[1]) >= .1) { snap(); P().draws.push({ id: uid(), type: 'dim', pts: [pv.a, pv.b] }); save(); }
@@ -579,7 +734,7 @@ function endPointer(e) {
     const t = prompt('ข้อความบนแปลน');
     if (t && t.trim()) { snap(); const d = { id: uid(), type: 'text', pts: [[r2(o.w[0]), r2(o.w[1])]], text: t.trim(), color: S.pen === PEN_COLORS[0] ? INK : S.pen }; P().draws.push(d); save(); setTool('select'); selectThing({ t: 'draw', id: d.id }); }
   } else if (o.moved && ['move', 'rot', 'wallEnd', 'moveWall', 'moveDraw'].includes(o.kind)) {
-    if (o.kind === 'wallEnd') S.preview = null;
+    if (o.kind === 'wallEnd' || o.kind === 'move') S.preview = null;
     save(); renderPanel();
   }
   render();
@@ -688,6 +843,7 @@ function renderPanel() {
   if (s) return renderInspector(s);
   if (S.tab === 'shots') return renderShots();
   if (S.tab === 'lights') return renderLights();
+  if (S.tab === 'refs') return renderRefs();
   return renderSceneTab();
 }
 function syncInspectorPos() {
@@ -706,7 +862,7 @@ function inspectorFields(it) {
     if (it.mode === 'rgb') base.push({ row: [{ k: 'color', label: 'สี', type: 'color' }, { k: 'k', label: 'หรือ CCT (K)', type: 'number' }] });
     base.push(
       { k: 'dim', label: 'Dimmer', type: 'range', min: 0, max: 100, unit: '%' },
-      { k: 'mod', label: 'Modifier', type: 'select', opts: MODIFIERS },
+      { row: [{ k: 'gel', label: 'เจล', type: 'select', opts: GELS.map(g => g[0]) }, { k: 'mod', label: 'Modifier', type: 'select', opts: MODIFIERS }] },
       { row: [{ k: 'beam', label: 'มุมลำแสง', type: 'range', min: 10, max: 360, step: 5, unit: '°' }, { k: 'reach', label: 'ระยะแสง', type: 'range', min: .5, max: 15, step: .5, unit: 'm' }] },
     );
   } else if (it.type === 'camera') {
@@ -717,6 +873,10 @@ function inspectorFields(it) {
       { k: 'height', label: 'ความสูงกล้อง', type: 'number', unit: 'm', step: .1 },
       { k: 'color', label: 'สีกล้อง', type: 'select', opts: CAM_COLORS.map((c, i) => [c, ['แดง', 'น้ำเงิน', 'เขียว', 'ม่วง', 'ส้ม', 'ฟ้า'][i]]) },
     );
+  } else if (FRAME_TYPES.includes(it.type)) {
+    const cats = it.type === 'diffusion' ? ['diff'] : it.type === 'bounce' ? ['bounce'] : it.type === 'net' ? ['net'] : it.type === 'flag' || it.type === 'neg' ? ['neg', 'net'] : ['diff', 'bounce', 'neg', 'net'];
+    base.push({ k: 'label', label: 'ชื่อ / ป้าย', ph: 'เช่น Key diffusion' },
+      { row: [{ k: 'size', label: 'ขนาดเฟรม (ฟุต / นิ้ว)', type: 'select', opts: FRAME_SIZES }, { k: 'fabric', label: 'ผ้า', type: 'select', opts: cats.flatMap(c => FABRICS[c]) }] });
   } else if (it.cat === 'person') {
     base.push({ k: 'label', label: 'ชื่อ / บทบาท', ph: 'เช่น แขกรับเชิญ, Director' }, { k: 'color', label: 'สี', type: 'select', opts: PERSON_COLORS.map((c, i) => [c, ['เหลือง', 'แดง', 'น้ำเงิน', 'เขียว', 'ม่วง', 'เทา'][i]]) });
   } else if (it.type === 'window') {
@@ -724,7 +884,11 @@ function inspectorFields(it) {
   } else {
     base.push({ k: 'label', label: 'ชื่อ / ป้าย', ph: 'แสดงบนแปลน (ถ้าใส่)' });
   }
-  base.push({ row: [{ k: 'rot', label: 'หมุน', type: 'number', unit: '°' }, { k: 's', label: it.type === 'tube' ? 'ความยาว (×1.2 m)' : 'ขนาด (เท่า)', type: 'number', step: .1 }] });
+  if (it.cat === 'light' || it.type === 'camera') {
+    const targets = S.scene.plan.items.filter(x => x.id !== it.id && (x.cat === 'person' || FRAME_TYPES.includes(x.type) || x.cat === 'set'));
+    base.push({ k: 'aim', label: 'เล็งไปที่ (ล็อกทิศตามเป้า)', type: 'select', opts: [['', '— หมุนเอง —'], ...targets.map(x => [x.id, itemName(x) + (x.cat === 'person' ? '' : ' · ' + LIBMAP[x.type].name)])] });
+  }
+  base.push({ row: [{ k: 'rot', label: 'หมุน', type: 'number', unit: '°' }, FRAME_TYPES.includes(it.type) ? { k: 'y', label: 'ตำแหน่ง Y', type: 'number', unit: 'm', step: .1 } : { k: 's', label: it.type === 'tube' ? 'ความยาว (×1.2 m)' : 'ขนาด (เท่า)', type: 'number', step: .1 }] });
   if (it.cat === 'light' || it.type === 'camera') base.push({ k: 'notes', label: 'โน้ต', type: 'textarea' });
   return base;
 }
@@ -769,6 +933,8 @@ function renderInspector(s) {
     pbody.innerHTML = html;
     bindFields(pbody, s, k => {
       if (k === 'mode' || k === 'sun') renderPanel();
+      if (k === 'aim') { if (!s.aim) delete s.aim; else { applyAims(S.scene); syncInspectorPos(); } }
+      if (k === 'rot') delete s.aim;
       if (k === 's') s.s = clamp(s.s, .2, 8);
       if (['label', 'body', 'lens', 'sensor'].includes(k)) {
         const hb = $('.insp-head b', pbody); if (hb) hb.textContent = itemName(s);
@@ -832,12 +998,12 @@ function renderLights() {
   const others = sc.plan.items.filter(i => i.cat !== 'light' && i.cat !== 'set');
   pbody.innerHTML = `<h3>ไฟในซีนนี้</h3>
     <div class="stat"><div><b>${total.toLocaleString()} W</b><small>รวมวัตต์ทั้งหมด (${L.length} ดวง)</small></div><div><b>${(draw / 220).toFixed(1)} A</b><small>กระแสโดยประมาณที่ 220V (ตาม dimmer)</small></div></div>
-    <div class="list">${L.map(l => `<button class="li" data-pick="${l.id}"><span class="sw" style="background:${lightColor(l)};box-shadow:0 0 0 1px #0002"></span><span class="grow"><b>${esc(itemName(l))}</b><small>${esc([l.model && l.label ? l.model : '', LIBMAP[l.type].name, l.watt + 'W', l.mode === 'rgb' ? 'RGB' : (l.mode === 'daylight' ? 5600 : l.k) + 'K', (l.dim ?? 100) + '%', l.mod !== '—' ? l.mod : ''].filter(Boolean).join(' · '))}</small></span></button>`).join('') || '<div class="note">ยังไม่มีไฟ กด + ที่แถบเครื่องมือเพื่อเพิ่มไฟ หรือเลือกจากชุดไฟของคุณ</div>'}</div>
+    <div class="list">${L.map(l => `<button class="li" data-pick="${l.id}"><span class="sw" style="background:${lightColor(l)};box-shadow:0 0 0 1px #0002"></span><span class="grow"><b>${esc(itemName(l))}</b><small>${esc([l.model && l.label ? l.model : '', LIBMAP[l.type].name, l.watt + 'W', kText(l), l.gel && l.gel !== '—' ? l.gel : '', (l.dim ?? 100) + '%', l.mod !== '—' ? l.mod : ''].filter(Boolean).join(' · '))}</small></span></button>`).join('') || '<div class="note">ยังไม่มีไฟ กด + ที่แถบเครื่องมือเพื่อเพิ่มไฟ หรือเลือกจากชุดไฟของคุณ</div>'}</div>
     <div class="acts" style="margin-top:10px"><button class="btn primary sm" id="addLight">+ เพิ่มไฟ</button><button class="btn sm" id="editKit">ชุดไฟของฉัน (${S.kit.length})</button></div>
     <h4>กล้อง คน และกริป</h4>
     <div class="list">${others.map(o => `<button class="li" data-pick="${o.id}"><span class="sw" style="background:${o.color || '#8b8d98'}"></span><span class="grow"><b>${esc(itemName(o))}</b><small>${esc(LIBMAP[o.type].name)}${o.type === 'camera' ? ' · ' + o.lens + 'mm · FOV ' + hfov(o).toFixed(0) + '°' : ''}</small></span></button>`).join('') || '<small class="muted">—</small>'}</div>`;
   $$('[data-pick]', pbody).forEach(b => b.onclick = () => selectThing({ t: 'item', id: b.dataset.pick }));
-  $('#addLight').onclick = () => openLibrary('light');
+  $('#addLight').onclick = () => openLibrary('brands');
   $('#editKit').onclick = openKit;
 }
 function renderSceneTab() {
@@ -849,6 +1015,9 @@ function renderSceneTab() {
     <h4>แปลนห้อง</h4>
     <div class="acts"><button class="btn sm" id="sRoom">สร้างห้อง / นำเข้าแปลน</button>${bg ? '<button class="btn sm" id="sCalib">ตั้งสเกลภาพ</button><button class="btn sm danger" id="sBgDel">ลบภาพพื้นหลัง</button>' : ''}</div>
     ${bg ? `<div style="margin-top:10px">${fieldHTML({ k: 'op', label: 'ความชัดภาพพื้นหลัง', type: 'range', min: .1, max: 1, step: .05 }, bg.op ?? .6)}</div>` : ''}
+    <h4>แม่เหล็ก</h4>
+    <div class="snaps">${[['ends', 'ปลายผนังดูดติดกัน / ต่อผนังแบบ T'], ['angle', 'ล็อกมุม 45° / 90°'], ['openings', 'ประตู หน้าต่าง ดูดเข้าผนัง'], ['furniture', 'เฟอร์นิเจอร์ชิดผนัง']].map(([k, n]) => `<label class="fld chk"><input type="checkbox" data-snap="${k}"${S.snaps[k] ? ' checked' : ''}><span>${n}</span></label>`).join('')}</div>
+    <label class="fld"><span>รูปแบบผนัง</span><select id="sWall"><option value="solid">เส้นทึบ</option><option value="block"${S.proj.wallStyle === 'block' ? ' selected' : ''}>บล็อก (แบบ diagram DP)</option></select></label>
     <h4>ซีน</h4>
     <div class="acts"><button class="btn sm" id="sDup">ทำซ้ำซีนนี้ (คัดลอกแปลน)</button><button class="btn sm danger" id="sDel">ลบซีน</button></div>`;
   bindFields(pbody, sc, k => { if (k === 'name' || k === 'number') updateTitle(); });
@@ -858,6 +1027,8 @@ function renderSceneTab() {
     $('#sCalib').onclick = startCalib;
     $('#sBgDel').onclick = () => { snap(); sc.plan.bg = null; save(); render(); renderPanel(); };
   }
+  $$('[data-snap]', pbody).forEach(el => el.onchange = () => { S.snaps[el.dataset.snap] = el.checked; DB.setMeta('snaps', S.snaps); });
+  $('#sWall').onchange = e => { S.proj.wallStyle = e.target.value; save(); render(); };
   $('#sRoom').onclick = openRoom;
   $('#sDup').onclick = () => duplicateScene(sc);
   $('#sDel').onclick = () => deleteScene(sc);
@@ -879,6 +1050,78 @@ function modal(html, { wide, onClose } = {}) {
 }
 const closeX = '<button class="ib x" data-close aria-label="ปิด"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
 function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 2200); }
+function pickFiles(accept) {
+  return new Promise(res => {
+    const i = document.createElement('input');
+    i.type = 'file'; i.accept = accept; i.multiple = true; i.style.display = 'none';
+    i.onchange = () => { res([...i.files]); i.remove(); };
+    document.body.appendChild(i); i.click();
+  });
+}
+// Dominant colours of an image, dark to light (for the ref palette strip)
+async function extractPalette(src, n = 12) {
+  const img = await loadImg(src), c = document.createElement('canvas'), k = 72 / Math.max(img.width, img.height);
+  c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+  const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, c.width, c.height);
+  const d = ctx.getImageData(0, 0, c.width, c.height).data, bins = new Map();
+  for (let i = 0; i < d.length; i += 4) {
+    const key = (d[i] >> 4) << 8 | (d[i + 1] >> 4) << 4 | (d[i + 2] >> 4);
+    const b = bins.get(key) || [0, 0, 0, 0]; b[0] += d[i]; b[1] += d[i + 1]; b[2] += d[i + 2]; b[3]++; bins.set(key, b);
+  }
+  const cols = [...bins.values()].sort((a, b) => b[3] - a[3]).map(b => [b[0] / b[3], b[1] / b[3], b[2] / b[3]]);
+  const out = [];
+  for (const c of cols) { if (out.every(o => Math.hypot(o[0] - c[0], o[1] - c[1], o[2] - c[2]) > 38)) out.push(c); if (out.length >= n) break; }
+  return out.sort((a, b) => (a[0] * .3 + a[1] * .59 + a[2] * .11) - (b[0] * .3 + b[1] * .59 + b[2] * .11)).map(c => '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join(''));
+}
+const marksSVG = (r, cls = '') => r.marks?.length ? `<svg class="${cls}" viewBox="0 0 1000 ${Math.round(1000 * r.h / r.w)}" preserveAspectRatio="none" aria-hidden="true">${r.marks.map(m => `<path d="${smoothPath(m.pts)}" fill="none" stroke="${m.c}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"${m.arrow ? ` marker-end="url(#rm${m.c.slice(1)})"` : ''}/>`).join('')}<defs>${REF_COLORS.map(c => `<marker id="rm${c.slice(1)}" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3" markerHeight="3" orient="auto"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join('')}</defs></svg>` : '';
+const REF_COLORS = ['#FF8A2B', '#2F6BFF', '#ffffff', '#C59BE8'];
+function renderRefs() {
+  const sc = S.scene; sc.refs = sc.refs || [];
+  pbody.innerHTML = `<h3>Ref board <small class="muted">${sc.refs.length} ภาพ</small><span class="sp"></span><button class="btn primary sm" id="addRef">+ แปะภาพ</button></h3>
+    ${sc.refs.length ? '' : '<div class="note">แปะภาพเรฟของซีน (still จากหนัง, mood, ภาพหน้างาน) แอปจะดึงพาเลตสีให้ และขีดทิศแสงทับภาพได้ ภาพแรกจะขึ้นหัว PDF</div>'}
+    <div class="refs">${sc.refs.map((r, i) => `<div class="ref" data-ref="${r.id}">
+      <div class="ref-img"><img src="${S.proj.photos[r.ph] || ''}" alt="ภาพเรฟ ${i + 1}">${marksSVG(r, 'ref-marks')}${i === 0 ? '<span class="ref-main">ภาพหลัก</span>' : ''}</div>
+      <div class="pal">${(r.pal || []).map(c => `<i style="background:${c}"></i>`).join('')}</div>
+      <input class="ref-note" data-note="${r.id}" value="${esc(r.note || '')}" placeholder="โน้ต เช่น Key ผ่านหน้าต่าง, rim สีส้ม">
+      <div class="acts"><button class="btn sm" data-ra="mark">ขีดทิศแสง</button>${i ? '<button class="btn sm" data-ra="main">ตั้งเป็นภาพหลัก</button>' : ''}<button class="btn sm danger" data-ra="del">ลบ</button></div></div>`).join('')}</div>`;
+  $('#addRef').onclick = async () => {
+    const files = await pickFiles('image/*'); if (!files.length) return;
+    toast('กำลังเพิ่มภาพ…');
+    for (const f of files) {
+      const img = await fileToJPEG(f, 1600, .85);
+      const pal = await extractPalette(img.src).catch(() => []);
+      sc.refs.push({ id: uid(), ph: addPhoto(img.src), w: img.w, h: img.h, pal, marks: [], note: '' });
+    }
+    save(); renderPanel();
+  };
+  $$('[data-note]', pbody).forEach(el => el.oninput = () => { sc.refs.find(r => r.id === el.dataset.note).note = el.value; save(); });
+  $$('[data-ra]', pbody).forEach(b => b.onclick = () => {
+    const id = b.closest('[data-ref]').dataset.ref, i = sc.refs.findIndex(r => r.id === id), a = b.dataset.ra;
+    if (a === 'del') { if (!confirm('ลบภาพเรฟนี้?')) return; sc.refs.splice(i, 1); }
+    else if (a === 'main') sc.refs.unshift(sc.refs.splice(i, 1)[0]);
+    else return openMarks(sc.refs[i]);
+    save(); renderPanel();
+  });
+}
+function openMarks(r) {
+  let color = REF_COLORS[0], arrow = true, cur = null;
+  const H = Math.round(1000 * r.h / r.w);
+  const m = modal(`<h3>ขีดทิศแสงบนภาพ ${closeX}</h3>
+    <div class="mark-wrap"><img src="${S.proj.photos[r.ph]}" alt=""><svg id="mk" viewBox="0 0 1000 ${H}" preserveAspectRatio="none"></svg></div>
+    <div class="acts" style="margin-top:10px">${REF_COLORS.map(c => `<button class="swb" data-c="${c}" aria-label="สี ${c}" style="background:${c}"></button>`).join('')}<button class="btn sm" id="mkArrow">ลูกศร: เปิด</button><button class="btn sm" id="mkUndo">ย้อนเส้นล่าสุด</button><span class="sp"></span><button class="btn primary" data-close>เสร็จ</button></div>`, { wide: true, onClose: () => { save(); renderPanel(); } });
+  const sv = $('#mk', m);
+  const draw = () => { sv.innerHTML = (marksSVG({ ...r, marks: cur ? [...r.marks, cur] : r.marks }).replace(/^<svg[^>]*>|<\/svg>$/g, '')); };
+  const pt = e => { const b = sv.getBoundingClientRect(); return [Math.round((e.clientX - b.left) / b.width * 1000), Math.round((e.clientY - b.top) / b.height * H)]; };
+  sv.addEventListener('pointerdown', e => { sv.setPointerCapture(e.pointerId); cur = { c: color, arrow, pts: [pt(e)] }; draw(); });
+  sv.addEventListener('pointermove', e => { if (!cur) return; const p = pt(e), l = cur.pts[cur.pts.length - 1]; if (Math.hypot(p[0] - l[0], p[1] - l[1]) > 8) { cur.pts.push(p); draw(); } });
+  const end = () => { if (cur && cur.pts.length > 1) r.marks.push(cur); cur = null; draw(); };
+  sv.addEventListener('pointerup', end); sv.addEventListener('pointercancel', end);
+  $$('[data-c]', m).forEach(b => b.onclick = () => { color = b.dataset.c; $$('[data-c]', m).forEach(x => x.classList.toggle('on', x === b)); });
+  $$('[data-c]', m)[0].classList.add('on');
+  $('#mkArrow', m).onclick = e => { arrow = !arrow; e.target.textContent = 'ลูกศร: ' + (arrow ? 'เปิด' : 'ปิด'); };
+  $('#mkUndo', m).onclick = () => { r.marks.pop(); draw(); };
+  draw();
+}
 function pickFile(accept) {
   return new Promise(res => {
     const i = document.createElement('input');
@@ -899,24 +1142,40 @@ async function fileToJPEG(file, max = 1400, q = .82) {
 }
 function addPhoto(src) { const id = uid(); S.proj.photos[id] = src; return id; }
 
-function openLibrary(tab = 'light') {
-  const m = modal(`<h3>เพิ่มลงแปลน ${closeX}</h3><div class="libtabs">${LIB_TABS.map(([k, n]) => `<button data-lt="${k}">${n}</button>`).join('')}</div><div class="libgrid"></div>`, { wide: true });
-  const grid = $('.libgrid', m);
+function openLibrary(tab = 'brands') {
+  const m = modal(`<h3>เพิ่มลงแปลน ${closeX}</h3><div class="libtabs">${LIB_TABS.map(([k, n]) => `<button data-lt="${k}">${n}</button>`).join('')}</div><div class="libtop"></div><div class="libgrid"></div>`, { wide: true });
+  const grid = $('.libgrid', m), top = $('.libtop', m);
+  let q = '';
+  const showBrands = () => {
+    const sc = S.libScale || 'mid', ql = q.toLowerCase();
+    const list = PRESETS.filter(p => (ql ? (p.brand + ' ' + p.model).toLowerCase().includes(ql) : p.scale === sc));
+    grid.innerHTML = list.map(p => `<button data-preset="${p.id}">${miniIcon(p.type)}<b>${esc(p.model)}</b><small>${esc(p.brand)} · ${p.watt >= 1000 ? (p.watt / 1000) + 'kW' : p.watt + 'W'} · ${p.mode === 'rgb' ? 'RGB' : p.mode === 'daylight' ? 'Daylight' : p.k === 3200 && p.watt >= 5000 ? 'Tungsten' : 'Bi-color'}</small></button>`).join('') || '<p class="muted">ไม่พบรุ่นนี้ ลองเพิ่มเองในชุดไฟของฉัน</p>';
+  };
   const show = t => {
     $$('[data-lt]', m).forEach(b => b.classList.toggle('on', b.dataset.lt === t));
+    top.innerHTML = '';
+    if (t === 'brands') {
+      top.innerHTML = `<div class="seg" id="libScale">${SCALES.map(([k, n]) => `<button data-sc="${k}" class="${(S.libScale || 'mid') === k ? 'on' : ''}">${n}</button>`).join('')}</div><input class="libq" type="search" aria-label="ค้นหารุ่นไฟ" placeholder="ค้นหายี่ห้อ / รุ่น เช่น Aputure, SkyPanel" value="${esc(q)}">`;
+      $('#libScale', m).onclick = e => { const b = e.target.closest('[data-sc]'); if (!b) return; S.libScale = b.dataset.sc; q = ''; $('.libq', m).value = ''; $$('#libScale button', m).forEach(x => x.classList.toggle('on', x === b)); showBrands(); };
+      $('.libq', m).oninput = e => { q = e.target.value.trim(); showBrands(); };
+      return showBrands();
+    }
     if (t === 'kit') {
       grid.innerHTML = S.kit.map(k => `<button data-kit="${k.id}">${miniIcon(k.type)}${esc(k.model)}<small>${k.watt}W · ${k.mode}</small></button>`).join('') + `<button data-kitedit>${'<svg viewBox="0 0 24 24" fill="none" stroke="#8a8780" stroke-width="1.6"><path d="M12 5v14M5 12h14"/></svg>'}แก้ไขชุดไฟ<small>เพิ่มไฟที่มีจริง</small></button>`;
-    } else grid.innerHTML = LIB.filter(d => d.cat === t).map(d => `<button data-add="${d.type}">${miniIcon(d.type)}${d.name}${d.cat === 'light' ? `<small>${d.d.watt}W · ${d.d.beam === 360 ? 'รอบทิศ' : d.d.beam + '°'}</small>` : ''}</button>`).join('');
+    } else grid.innerHTML = LIB.filter(d => d.cat === t).map(d => `<button data-add="${d.type}">${miniIcon(d.type)}${d.name}${d.cat === 'light' ? `<small>${d.d.watt}W · ${d.d.beam === 360 ? 'รอบทิศ' : d.d.beam + '°'}</small>` : d.d.size ? `<small>${d.d.size} · ${d.d.fabric}</small>` : ''}</button>`).join('');
   };
   $('.libtabs', m).onclick = e => { const b = e.target.closest('[data-lt]'); if (b) show(b.dataset.lt); };
   grid.onclick = e => {
-    const a = e.target.closest('[data-add]'), k = e.target.closest('[data-kit]');
+    const a = e.target.closest('[data-add]'), k = e.target.closest('[data-kit]'), pr = e.target.closest('[data-preset]');
     if (e.target.closest('[data-kitedit]')) { m.close(); return openKit(); }
-    if (!a && !k) return;
+    if (!a && !k && !pr) return;
     const [x, y] = viewCenter();
     let it;
     if (a) it = makeItem(a.dataset.add, x, y);
-    else {
+    else if (pr) {
+      const p = PRESETS.find(z => z.id === pr.dataset.preset);
+      it = makeItem(p.type, x, y, { model: p.brand + ' ' + p.model, watt: p.watt, mode: p.mode, k: p.k });
+    } else {
       const kd = S.kit.find(z => z.id === k.dataset.kit);
       it = makeItem(kd.type, x, y, { model: kd.model, watt: kd.watt, mode: kd.mode, k: kd.mode === 'daylight' ? 5600 : LIBMAP[kd.type].d.k });
     }
@@ -1067,7 +1326,7 @@ function openProject(p) {
 }
 function gcPhotos(p) {
   const used = new Set();
-  p.scenes.forEach(sc => { sc.shots.forEach(s => s.photo && used.add(s.photo)); if (sc.plan.bg) used.add(sc.plan.bg.ph); });
+  p.scenes.forEach(sc => { sc.shots.forEach(s => s.photo && used.add(s.photo)); if (sc.plan.bg) used.add(sc.plan.bg.ph); (sc.refs || []).forEach(r => used.add(r.ph)); });
   Object.keys(p.photos).forEach(k => { if (!used.has(k)) delete p.photos[k]; });
 }
 async function goHome() {
@@ -1141,6 +1400,7 @@ $('#btnImport').onclick = async () => {
 // ---------- demo ----------
 function demoProject() {
   const p = newProject('สัมภาษณ์ · Founder Talk', 'Studio Hoya', new Date().toISOString().slice(0, 10));
+  p.wallStyle = 'block';
   const sc = p.scenes[0];
   Object.assign(sc, { number: '1', name: 'สัมภาษณ์ – ห้องนั่งเล่น', location: 'บ้านลูกค้า · ห้องนั่งเล่น', time: 'กลางวัน', notes: 'โทนอบอุ่น ธรรมชาติ ให้แสงหน้าต่างเป็นแสงหลักของพื้นหลัง ปิดไฟเพดานทั้งหมด' });
   S.scene = sc;
@@ -1151,15 +1411,17 @@ function demoProject() {
   add('door', -3, 1.5, 0);
   add('armchair', -.75, 0, 0); add('armchair', .75, 0, 180);
   add('talent', -.75, 0, 0, { label: 'ผู้สัมภาษณ์', color: '#2f7cf6' });
-  add('talent', .75, 0, 180, { label: 'แขกรับเชิญ', color: '#f5a524' });
+  const guest = add('talent', .75, 0, 180, { label: 'แขกรับเชิญ', color: '#f5a524' });
   add('coffee', 0, .95, 90, { s: .7 });
   add('plant', 2.5, -2, 0); add('cabinet', 2.72, .6, 180);
   add('practical', 2.55, 1.9, 0, { label: 'โคมตั้งพื้น', k: 2700, watt: 40 });
-  add('cob', 2.1, -1.35, 147, { label: 'Key', model: 'Aputure 600d', watt: 600, mode: 'daylight', k: 5600, dim: 70 });
-  add('lantern', -2.1, -1.6, 37, { label: 'Fill', model: 'Amaran 200x', watt: 200, k: 4300, dim: 40 });
-  add('fresnel', -2.2, 1.9, -30, { label: 'Back light', model: 'Nanlite Forza 300B', watt: 300, k: 3200, dim: 55, beam: 25 });
-  add('tube', -2.75, -.2, 0, { label: 'BG accent', model: 'PavoTube II 30X', s: 1, color: '#ff8a3d', dim: 60 });
-  add('flag', 1.55, -1.55, 120, { s: .8 });
+  add('cob', 2.3, -1.55, 147, { label: 'Key', model: 'Aputure STORM 1200x', watt: 1200, mode: 'bicolor', k: 5600, dim: 70, gel: '¼ CTO', aim: guest.id });
+  add('diffusion', 1.5, -.95, 145, { size: '8×8', fabric: '¼ Grid' });
+  add('lantern', -2.1, -1.6, 37, { label: 'Fill', model: 'Aputure amaran 200x S', watt: 200, k: 4300, dim: 40 });
+  add('fresnel', -2.2, 1.9, -30, { label: 'Back light', model: 'Nanlite Forza 500B II', watt: 500, k: 3200, dim: 55, beam: 25 });
+  add('tube', -2.75, -.2, 0, { label: 'BG accent', model: 'Astera Titan Tube', s: 1, color: '#ff8a3d', dim: 60 });
+  add('neg', 2.85, .9, 180, { size: '4×8', fabric: 'Solid / Duvetyne' });
+  add('hazer', -2.4, 1.1, 0, {});
   const A = add('camera', -1.9, .55, -12, { label: 'A', body: 'Sony FX3', lens: 50, color: CAM_COLORS[0] });
   const B = add('camera', 1.85, .75, 198, { label: 'B', body: 'Sony FX30', sensor: 'apsc', lens: 56, color: CAM_COLORS[1] });
   const C = add('camera', 0, 2.05, -90, { label: 'C', body: 'BMPCC 6K', sensor: 's35', lens: 24, color: CAM_COLORS[2] });
@@ -1272,7 +1534,13 @@ function sheetHeader(ctx, sc, cont) {
   ctx.fillText(sceneTitle(sc) + (cont ? '  (ต่อ)' : ''), SM, SM + 105);
   ctx.fillStyle = '#6b6860'; ctx.font = `500 32px ${FONT}`;
   ctx.fillText([sc.location, sc.time].filter(Boolean).join('  ·  '), SM, SM + 155);
-  ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.font = `700 34px ${FONT}`; ctx.fillText('DP Plans', SW - SM, SM + 20);
+  ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.font = `500 38px Outfit, ${FONT}`; ctx.fillText('dp plans', SW - SM, SM + 22);
+  { const cx = SW - SM - ctx.measureText('dp plans').width - 40, cy = SM + 8, r = 26;
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
+    let g = ctx.createRadialGradient(cx + r * .6, cy + r * .6, 0, cx + r * .6, cy + r * .6, r * 2.2); g.addColorStop(0, '#8CC4FF'); g.addColorStop(.45, '#2F6BFF'); g.addColorStop(1, '#1B3FB8'); ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+    g = ctx.createRadialGradient(cx - r * .4, cy - r * .4, 0, cx - r * .4, cy - r * .4, r * 1.5); g.addColorStop(0, '#FFD08A'); g.addColorStop(.4, '#FF8A2B'); g.addColorStop(1, 'rgba(255,138,43,0)'); ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+    ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + r, cy - r * .45); ctx.lineTo(cx + r, cy + r * .45); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, r * .16, 0, 7); ctx.fill(); ctx.restore(); }
   ctx.fillStyle = '#86827a'; ctx.font = `500 24px ${FONT}`; ctx.fillText('Lighting & shot plan', SW - SM, SM + 54);
   ctx.textAlign = 'left';
   ctx.fillStyle = '#e6e2d9'; ctx.fillRect(SM, SM + 190, SW - SM * 2, 3);
@@ -1285,11 +1553,29 @@ async function sceneSheets(sc) {
   const pages = [];
   const mk = cont => { const c = document.createElement('canvas'); c.width = SW; c.height = SH; const ctx = c.getContext('2d'); sheetHeader(ctx, sc, cont); pages.push(c); return ctx; };
   let ctx = mk(false);
-  // plan
-  const pw = 1400, ph = bottom - top;
+  // ref still + palette (like a DP lighting breakdown), then the plan
+  const pw = 1400;
+  let ptop = top;
+  const ref = sc.refs?.[0], refSrc = ref && S.proj.photos[ref.ph];
+  if (refSrc) {
+    const im = await loadImg(refSrc), rh = 520;
+    coverDraw(ctx, im, SM, top, pw, rh, 18);
+    if (ref.marks?.length) {
+      const mk = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(marksSVG(ref).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="' + Math.round(1000 * ref.h / ref.w) + '" ')));
+      // marks were drawn on the whole image: map them through the same cover crop
+      const k = Math.max(pw / im.width, rh / im.height), iw = im.width * k, ih = im.height * k;
+      ctx.save(); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(SM, top, pw, rh, 18) : ctx.rect(SM, top, pw, rh); ctx.clip();
+      ctx.drawImage(mk, SM + (pw - iw) / 2, top + (rh - ih) / 2, iw, ih); ctx.restore();
+    }
+    const pal = ref.pal || [];
+    pal.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(SM + i * pw / pal.length, top + rh + 12, pw / pal.length + 1, 34); });
+    if (ref.note) { ctx.fillStyle = '#5b5a55'; ctx.font = `500 24px ${FONT}`; ctx.fillText(ref.note, SM, top + rh + 80); }
+    ptop = top + rh + (ref.note ? 100 : 66);
+  }
+  const ph = bottom - ptop;
   const pc = await planCanvas(sc, pw, ph);
-  ctx.save(); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(SM, top, pw, ph, 18) : ctx.rect(SM, top, pw, ph); ctx.clip(); ctx.drawImage(pc, SM, top); ctx.restore();
-  ctx.strokeStyle = '#e1ddd3'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(SM, top, pw, ph, 18) : ctx.rect(SM, top, pw, ph); ctx.stroke();
+  ctx.save(); ctx.beginPath(); ctx.roundRect ? ctx.roundRect(SM, ptop, pw, ph, 18) : ctx.rect(SM, ptop, pw, ph); ctx.clip(); ctx.drawImage(pc, SM, ptop); ctx.restore();
+  ctx.strokeStyle = '#e1ddd3'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(SM, ptop, pw, ph, 18) : ctx.rect(SM, ptop, pw, ph); ctx.stroke();
   // blocks
   const blocks = [];
   const head = (t, n) => blocks.push({ keep: true, h: () => 64, draw: (c, x, y, w) => { c.fillStyle = INK; c.font = `700 34px ${FONT}`; c.fillText(t, x, y + 40); if (n != null) { c.fillStyle = '#86827a'; c.font = `500 28px ${FONT}`; c.textAlign = 'right'; c.fillText(n, x + w, y + 40); c.textAlign = 'left'; } c.fillStyle = '#ece8e0'; c.fillRect(x, y + 56, w, 2); } });
@@ -1329,7 +1615,7 @@ async function sceneSheets(sc) {
   const L = lights(sc);
   if (L.length) {
     head('ไฟ', `${L.reduce((a, l) => a + (+l.watt || 0), 0).toLocaleString()} W`);
-    L.forEach(l => line(`${itemName(l)} — ${[l.model && l.label ? l.model : '', LIBMAP[l.type].name, l.watt + 'W', l.mode === 'rgb' ? 'RGB' : (l.mode === 'daylight' ? 5600 : l.k) + 'K', (l.dim ?? 100) + '%', l.mod !== '—' ? l.mod : ''].filter(Boolean).join(' · ')}`, { sw: lightColor(l), size: 25 }));
+    L.forEach(l => line(`${itemName(l)} — ${[l.model && l.label ? l.model : '', LIBMAP[l.type].name, l.watt + 'W', kText(l), l.gel && l.gel !== '—' ? l.gel : '', (l.dim ?? 100) + '%', l.mod !== '—' ? l.mod : ''].filter(Boolean).join(' · ')}`, { sw: lightColor(l), size: 25 }));
   }
   const grip = sc.plan.items.filter(i => i.cat === 'grip' || i.type === 'monitor');
   const C = cams(sc);
@@ -1364,7 +1650,7 @@ async function buildSheets(scenes) {
   pages.forEach((c, i) => {
     const ctx = c.getContext('2d'); ctx.textAlign = 'right'; ctx.fillStyle = '#9b978e'; ctx.font = `500 24px ${FONT}`;
     ctx.fillText(`${i + 1} / ${pages.length}`, SW - SM, SH - SM + 40);
-    ctx.textAlign = 'left'; ctx.fillText(`สร้างด้วย DP Plans · ${new Date().toLocaleDateString('th-TH')}`, SM, SH - SM + 40);
+    ctx.textAlign = 'left'; ctx.fillText(`สร้างด้วย dp plans · ${new Date().toLocaleDateString('th-TH')}`, SM, SH - SM + 40);
   });
   return pages;
 }
@@ -1466,6 +1752,8 @@ function openExport() {
   try { await DB.open(); } catch { toast('เบราว์เซอร์นี้บันทึกข้อมูลไม่ได้ ข้อมูลจะหายเมื่อปิดหน้า'); }
   const kit = await DB.getMeta('kit').catch(() => null);
   if (Array.isArray(kit)) S.kit = kit;
+  const sn = await DB.getMeta('snaps').catch(() => null);
+  if (sn) Object.assign(S.snaps, sn);
   await loadProjects();
   renderTools();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => { });
