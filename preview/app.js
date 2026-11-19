@@ -12,10 +12,10 @@ const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
 const normDeg = d => ((d % 360) + 360) % 360;
 const clone = o => JSON.parse(JSON.stringify(o));
 const FONT = `Anuphan, 'IBM Plex Sans Thai', Thonburi, 'Noto Sans Thai', system-ui, sans-serif`;
-const PAPER = '#F6F3EC', INK = '#2B2B2E', SETF = '#ebe7df', SETS = '#4a4a50';
+const PAPER = '#F1F2F4', INK = '#2B2B2E', SETF = '#ebe7df', SETS = '#4a4a50';
 const CAM_COLORS = ['#e5484d', '#2f7cf6', '#30a46c', '#8e4ec6', '#f76b15', '#0894b3'];
 const PEN_COLORS = ['#e5484d', '#2f7cf6', '#1c1c1f', '#f5a524', '#30a46c'];
-const PERSON_COLORS = ['#f5a524', '#e5484d', '#2f7cf6', '#30a46c', '#8e4ec6', '#8b8d98'];
+const PERSON_COLORS = ['#FF7A1A', '#2F6BFF', '#2B2B2E', '#FFFFFF', '#F5C400', '#22B07D', '#E5484D', '#8E6BE8', '#00A3C4', '#FF5FA2', '#8B5E3C', '#7A8B99'];
 const SENSORS = { ff: ['Full Frame', 36], s35: ['Super 35', 24.9], apsc: ['APS-C', 23.5], mft: ['Micro 4/3', 17.3], phone: ['มือถือ (ระยะเทียบ FF)', 36] };
 const SHOT_SIZES = ['EWS', 'WS', 'FS', 'MS', 'MCU', 'CU', 'ECU', 'OTS', 'POV', '2-Shot', 'Insert'];
 const ANGLES = ['ระดับสายตา', 'มุมสูง', 'มุมต่ำ', 'Top shot', 'Dutch'];
@@ -44,9 +44,9 @@ const SHAPES = {
   panel: () => `<rect x="-.06" y="-.3" width=".11" height=".6" rx=".02" fill="${INK}"/><rect x=".05" y="-.28" width=".035" height=".56" fill="#ffe7a8"/>`,
   tube: () => `<rect x="-.035" y="-.6" width=".07" height="1.2" rx=".035" fill="#fff" stroke="${INK}" stroke-width=".02"/>`,
   practical: () => `<circle r=".2" fill="#fff6d6" stroke="${INK}" stroke-width=".03"/><circle r=".07" fill="#f5a524"/>`,
-  camera: it => `<rect x="-.24" y="-.13" width=".32" height=".26" rx=".04" fill="${it.color || CAM_COLORS[0]}"/><rect x=".08" y="-.08" width=".18" height=".16" rx=".02" fill="${INK}"/><rect x="-.32" y="-.06" width=".08" height=".12" fill="${INK}"/>`,
+  camera: it => { const c = it.color || CAM_COLORS[0]; return `<circle cx="-.13" cy="-.2" r=".1" fill="#fff" stroke="${c}" stroke-width=".04"/><circle cx=".05" cy="-.2" r=".1" fill="#fff" stroke="${c}" stroke-width=".04"/><rect x="-.26" y="-.11" width=".34" height=".24" rx=".05" fill="${c}"/><path d="M.08-.06L.28-.15V.17L.08.08z" fill="${c}"/><circle cx="-.09" cy=".01" r=".04" fill="#fff" fill-opacity=".7"/>`; },
   monitor: () => `<rect x="-.05" y="-.26" width=".1" height=".52" rx=".02" fill="${INK}"/><rect x=".05" y="-.23" width=".02" height=".46" fill="#7fb8ff"/><circle cx="-.18" r=".06" fill="${INK}"/>`,
-  talent: it => `<ellipse rx=".17" ry=".32" fill="${it.color || '#f5a524'}" opacity=".35"/><circle r=".2" fill="${it.color || '#f5a524'}" stroke="#fff" stroke-width=".03"/><path d="M.18-.09L.34 0L.18.09z" fill="${it.color || '#f5a524'}"/>`,
+  talent: it => { const c = it.color || '#FF7A1A', light = /^#f{6}$/i.test(c); return `<ellipse rx=".17" ry=".32" fill="${c}" opacity=".35"/><circle r=".2" fill="${c}" stroke="${light ? '#2B2B2E' : '#fff'}" stroke-width="${light ? .02 : .03}"/><path d="M.18-.09L.34 0L.18.09z" fill="${light ? '#2B2B2E' : c}"/>`; },
   crew: it => SHAPES.talent({ color: it.color || '#8b8d98' }),
   softpanel: () => `<rect x="-.1" y="-.62" width=".14" height="1.24" rx=".03" fill="${INK}"/><rect x=".04" y="-.58" width=".04" height="1.16" fill="#eef2ff"/>`,
   mat: () => `<rect x="-.03" y="-.6" width=".06" height="1.2" rx=".02" fill="#fff" stroke="${INK}" stroke-width=".02"/><path d="M-.03-.3H.03M-.03 0H.03M-.03.3H.03" stroke="${INK}" stroke-width=".01"/>`,
@@ -57,8 +57,8 @@ const SHAPES = {
   neg: it => frameShape(it), net: it => frameShape(it), overhead: it => frameShape(it),
   hazer: () => `<circle r=".75" fill="#c9c6c0" fill-opacity=".18" stroke="#8a8780" stroke-width=".015" stroke-dasharray=".06 .05"/><rect x="-.18" y="-.12" width=".3" height=".24" rx=".04" fill="${INK}"/><path d="M.12-.05h.12M.12.05h.12" stroke="${INK}" stroke-width=".03"/>`,
   cstand: () => `<path d="M0 0L.3 0M0 0L-.15.26M0 0L-.15-.26" stroke="${INK}" stroke-width=".035" stroke-linecap="round"/><circle r=".05" fill="${INK}"/>`,
-  door: () => `<rect x="-.09" y="-.45" width=".18" height=".9" fill="${PAPER}"/><rect x="0" y="-.47" width=".9" height=".04" fill="${SETS}"/><path d="M.9-.45A.9.9 0 0 1 0 .45" fill="none" stroke="${SETS}" stroke-width=".015" stroke-dasharray=".05 .04"/><path d="M0-.45V.45" stroke="${SETS}" stroke-width=".02"/>`,
-  window: () => `<rect x="-.09" y="-.6" width=".18" height="1.2" fill="${PAPER}"/><rect x="-.07" y="-.6" width=".14" height="1.2" fill="#dcecff" ${st(.02)}/><path d="M0-.6V.6" stroke="${SETS}" stroke-width=".015"/>`,
+  door: () => `<rect x="-.06" y="-.45" width=".12" height=".9" fill="${PAPER}"/><path d="M-.05-.45h.1M-.05.45h.1" stroke="${INK}" stroke-width=".03"/><rect x="0" y="-.47" width=".9" height=".04" fill="${SETS}"/><path d="M.9-.45A.9.9 0 0 1 0 .45" fill="none" stroke="${SETS}" stroke-width=".015" stroke-dasharray=".05 .04"/><path d="M0-.45V.45" stroke="${SETS}" stroke-width=".02"/>`,
+  window: () => `<rect x="-.06" y="-.6" width=".12" height="1.2" fill="${PAPER}"/><path d="M-.025-.6V.6M.025-.6V.6" stroke="#2F6BFF" stroke-width=".018"/><path d="M-.05-.6h.1M-.05.6h.1" stroke="${INK}" stroke-width=".03"/>`,
   chair: () => `<rect x="-.22" y="-.22" width=".44" height=".44" rx=".06" fill="${SETF}" ${st()}/><rect x="-.27" y="-.22" width=".09" height=".44" rx=".03" fill="${SETS}"/>`,
   armchair: () => `<rect x="-.4" y="-.4" width=".8" height=".8" rx=".1" fill="${SETF}" ${st()}/><rect x="-.4" y="-.4" width=".2" height=".8" rx=".06" fill="#d4cfc4" ${st()}/><rect x="-.3" y="-.4" width=".7" height=".14" rx=".05" fill="#d4cfc4" ${st()}/><rect x="-.3" y=".26" width=".7" height=".14" rx=".05" fill="#d4cfc4" ${st()}/>`,
   sofa: () => `<rect x="-.45" y="-1" width=".9" height="2" rx=".1" fill="${SETF}" ${st()}/><rect x="-.45" y="-1" width=".22" height="2" rx=".07" fill="#d4cfc4" ${st()}/><rect x="-.25" y="-1" width=".7" height=".18" rx=".06" fill="#d4cfc4" ${st()}/><rect x="-.25" y=".82" width=".7" height=".18" rx=".06" fill="#d4cfc4" ${st()}/><path d="M-.23 0H.45" ${st(.015)}/>`,
@@ -208,7 +208,7 @@ const DB = {
 const S = {
   projects: [], kit: clone(DEFAULT_KIT), proj: null, scene: null,
   sel: null, tool: 'select', view: { x: 0, y: 0, z: 60 }, tab: 'shots', labels: true,
-  activeShot: null, pen: PEN_COLORS[0], preview: null, undo: [], redo: [],
+  activeShot: null, labelMode: 'short', pen: PEN_COLORS[0], preview: null, undo: [], redo: [],
   snaps: { ends: true, angle: true, openings: true, furniture: true },
 };
 let saveTimer = null;
@@ -341,8 +341,8 @@ function planSVG(sc, o) {
   const block = (o.wallStyle || S.proj?.wallStyle) === 'block';
   for (const w of p.walls) {
     const t = w.t || .12;
-    if (block) out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="#6A6866" stroke-width="${t + .03}" stroke-linecap="square"/><line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${PAPER}" stroke-width="${t * .5}" stroke-dasharray=".32 .05"/>`;
-    else out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${INK}" stroke-width="${t}" stroke-linecap="square"/>`;
+    if (block) out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="#6A6866" stroke-width="${t * .8}" stroke-linecap="square"/><line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${PAPER}" stroke-width="${t * .4}" stroke-dasharray=".32 .05"/>`;
+    else out += `<line x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="${INK}" stroke-width="${Math.min(t, .06)}" stroke-linecap="round"/>`;
   }
   // items
   for (const it of p.items) {
@@ -411,6 +411,14 @@ function planSVG(sc, o) {
 const LW = (s, size) => String(s).length * size * .56;
 function labelLines(it) {
   const def = LIBMAP[it.type]; if (!def) return null;
+  if (S.labelMode !== 'full') {
+    const dot = it.cat === 'light' ? lightColor(it) : null;
+    if (it.cat === 'light') return [{ t: `${it.label ? it.label + ' ' : ''}${kText(it)}`, size: .15, h: .29, kind: 'pill', bg: '#2B2B2E', fg: '#fff', dot }];
+    if (it.type === 'camera') return [{ t: `${it.label || 'Cam'} ${it.lens || 35}`, size: .15, h: .29, kind: 'pill', bg: it.color || '#2B2B2E', fg: '#fff' }];
+    if (FRAME_TYPES.includes(it.type)) return [{ t: it.size, size: .13, h: .19, kind: 'txt', extra: `fill="${FABRIC_STYLE[fabricCat(it.fabric)][2]}" font-weight="600"` }];
+    if (it.cat === 'person' && it.label) return [{ t: it.label, size: .15, h: .21, kind: 'txt', extra: 'font-weight="600"' }];
+    return null;
+  }
   if (it.cat === 'light') {
     const L = [];
     if (it.label) L.push({ t: it.label, size: .15, h: .2, kind: 'txt', extra: 'fill="#5b5a55" font-weight="500"' });
@@ -439,7 +447,7 @@ function placeLabels(p, px) {
   Object.defineProperty(p, '_labels', { value: placed, writable: true, configurable: true, enumerable: false });
   for (const it of p.items) {
     const L = labelLines(it); if (!L) continue;
-    const w = Math.max(...L.map(l => LW(l.t, l.size) + (l.kind === 'pill' ? l.size * 1.1 : 0))) + .06, h = L.reduce((s, l) => s + l.h, 0);
+    const w = Math.max(...L.map(l => LW(l.t, l.size) + (l.kind === 'pill' ? l.size * 1.1 : 0) + (l.dot ? .22 : 0))) + .06, h = L.reduce((s, l) => s + l.h, 0);
     const r = itemR(it), g = .1;
     const cands = [
       [it.x - w / 2, it.y + r + g], [it.x - w / 2, it.y - r - g - h], [it.x + r + g, it.y - h / 2], [it.x - r - g - w, it.y - h / 2],
@@ -463,7 +471,7 @@ function placeLabels(p, px) {
     }
     let y = R.y0, cx = (R.x0 + R.x1) / 2;
     for (const l of L) {
-      if (l.kind === 'pill') out += pill(cx, y + l.h / 2, l.t, l.size, l.bg, l.fg);
+      if (l.kind === 'pill') { out += pill(cx, y + l.h / 2, l.t, l.size, l.bg, l.fg); if (l.dot) out += `<circle cx="${(cx - (LW(l.t, l.size) + l.size * 1.1) / 2 - .05).toFixed(3)}" cy="${(y + l.h / 2).toFixed(3)}" r="${(l.size * .42).toFixed(3)}" fill="${l.dot}" stroke="#fff" stroke-width="${(l.size * .12).toFixed(3)}"/>`; }
       else out += txt(cx, y + l.size * .95, l.t, l.size, l.extra);
       y += l.h;
     }
@@ -556,33 +564,46 @@ const IC = {
   dim: '<path d="M3 15l12-12 6 6L9 21z"/><path d="M7 11l2 2M10 8l2 2M13 5l2 2"/>',
   text: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
   labels: '<path d="M4 7h16M4 12h10M4 17h13"/>',
+  door: '<path d="M6 21V3h10v18M3 21h18M13 12h.5"/>',
+  window: '<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M12 4v16M4 12h16"/>',
+  light: '<path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0012 3z"/>',
+  camera: '<path d="M3 10h11v9H3zM14 13l6-3v9l-6-3"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="11.5" cy="6.5" r="2.5"/>',
+  person: '<circle cx="12" cy="7" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+  more: '<circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>',
 };
 const TOOLS = [
-  { id: 'select', t: 'เลือก / ย้าย / หมุน' },
-  { id: 'add', t: 'เพิ่มไฟ กล้อง คน พร็อพ', act: () => openLibrary() },
-  { id: 'room', t: 'สร้างห้อง / นำเข้าแปลนสแกน', act: () => openRoom() },
+  { id: 'select', t: 'เลือก' },
+  { id: 'room', t: 'ห้องสำเร็จรูป', act: () => openRoom() },
+  { id: 'wall', t: 'ผนัง' },
+  { id: 'door', t: 'ประตู (แตะบนผนัง)' },
+  { id: 'window', t: 'หน้าต่าง (แตะบนผนัง)' },
   { sep: 1 },
-  { id: 'wall', t: 'วาดผนัง' },
-  { id: 'arrow', t: 'ลูกศรการเคลื่อนไหว' },
-  { id: 'pen', t: 'ปากกา' },
+  { id: 'light', t: 'ไฟ' },
+  { id: 'camera', t: 'กล้อง' },
+  { id: 'person', t: 'คน' },
+  { id: 'add', t: 'คลังอุปกรณ์ทั้งหมด', act: () => openLibrary() },
+  { sep: 1 },
+  { id: 'arrow', t: 'ลูกศร' },
   { id: 'dim', t: 'วัดระยะ' },
   { id: 'text', t: 'ข้อความ' },
-  { sep: 1 },
-  { id: 'color', t: 'สีปากกา / ลูกศร', act: () => { S.pen = PEN_COLORS[(PEN_COLORS.indexOf(S.pen) + 1) % PEN_COLORS.length]; renderTools(); } },
-  { id: 'labels', t: 'แสดง / ซ่อนป้ายชื่อ', act: () => { S.labels = !S.labels; renderTools(); render(); } },
+  { id: 'color', t: 'สีเส้น', act: () => { S.pen = PEN_COLORS[(PEN_COLORS.indexOf(S.pen) + 1) % PEN_COLORS.length]; renderTools(); } },
+  { id: 'labels', t: 'ป้าย: ย่อ / เต็ม / ซ่อน', act: () => { const m = ['short', 'full', 'off'], n = m[(m.indexOf(S.labelMode || 'short') + 1) % 3]; S.labelMode = n; S.labels = n !== 'off'; delete S.scene.plan._labels; renderTools(); render(); toast({ short: 'ป้ายแบบย่อ', full: 'ป้ายแบบเต็ม', off: 'ซ่อนป้าย' }[n]); } },
 ];
+const PLACE = { light: 'cob', camera: 'camera', person: 'talent', door: 'door', window: 'window' };
 const HINTS = {
-  wall: 'ลากเพื่อวาดผนัง · ปลายดูดติดกัน ต่อแบบ T ได้ · ลากกลับจุดเริ่มเพื่อปิดห้อง',
-  arrow: 'ลากเพื่อวาดเส้นการเดินของนักแสดง / การเคลื่อนกล้อง',
-  pen: 'วาดโน้ตด้วยมือได้อิสระ',
-  dim: 'ลากเพื่อวัดระยะ (เมตร)',
-  text: 'แตะตรงที่ต้องการใส่ข้อความ',
+  wall: 'ลากเพื่อวาด · ลากกลับจุดเริ่ม = ปิดห้อง',
+  door: 'แตะบนเส้นผนัง', window: 'แตะบนเส้นผนัง',
+  light: 'แตะเพื่อวาง', camera: 'แตะเพื่อวาง', person: 'แตะเพื่อวาง',
+  arrow: 'ลากเส้นการเคลื่อนไหว',
+  pen: 'วาดอิสระ',
+  dim: 'ลากเพื่อวัด',
+  text: 'แตะเพื่อพิมพ์',
   calib: 'ลากเส้นทับระยะที่รู้ความยาวจริงบนภาพ เช่น ความกว้างผนัง',
 };
 function renderTools() {
   $('#tools').innerHTML = TOOLS.map(t => {
     if (t.sep) return '<div class="tsep"></div>';
-    const on = S.tool === t.id || (t.id === 'labels' && S.labels);
+    const on = S.tool === t.id;
     const inner = t.id === 'color' ? `<span class="dot" style="background:${S.pen}"></span>` : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[t.id]}</svg>`;
     return `<button class="tool${on ? ' on' : ''}" data-tool="${t.id}" title="${t.t}" aria-label="${t.t}">${inner}</button>`;
   }).join('');
@@ -650,7 +671,10 @@ function magnetItem(it) {
     if (n.d > .45) return null;
     const c1 = normDeg(n.ang - 90), c2 = normDeg(n.ang + 90), cur = normDeg(it.rot || 0);
     const dd = a => Math.min(Math.abs(a - cur), 360 - Math.abs(a - cur));
-    it.x = r2(n.q[0]); it.y = r2(n.q[1]); it.rot = dd(c1) <= dd(c2) ? c1 : c2;
+    // swing towards the side of the wall the finger is on (inside the room); on the line itself keep the current side
+    const sx = it.x - n.q[0], sy = it.y - n.q[1], side = a => Math.cos(rad(a)) * sx + Math.sin(rad(a)) * sy;
+    it.x = r2(n.q[0]); it.y = r2(n.q[1]);
+    it.rot = n.d > .03 ? (side(c1) > side(c2) ? c1 : c2) : (dd(c1) <= dd(c2) ? c1 : c2);
     return { pt: n.q, kind: 'เข้าผนัง' };
   }
   const back = BACK[it.type] * (it.s || 1);
@@ -713,6 +737,8 @@ svg.addEventListener('pointerdown', e => {
     S.preview = { type: 'stroke', pts: [w], color: S.pen, arrow: tool === 'arrow' };
   } else if (tool === 'text') {
     op = { kind: 'text', ...start };
+  } else if (PLACE[tool]) {
+    op = { kind: 'place', ...start };
   }
   render();
 });
@@ -800,6 +826,19 @@ function endPointer(e) {
   } else if (o.kind === 'stroke' && pv) {
     if (pv.pts.length > 1) { snap(); P().draws.push({ id: uid(), type: S.tool === 'arrow' ? 'arrow' : 'pen', pts: simplify(pv.pts), color: pv.color }); save(); }
     S.preview = null;
+  } else if (o.kind === 'place') {
+    const type = PLACE[S.tool], opening = type === 'door' || type === 'window';
+    const it = makeItem(type, r2(o.w[0]), r2(o.w[1]));
+    if (opening) {
+      const n = nearestOnWall([it.x, it.y]);
+      if (!n || n.d > 1.2) { toast('แตะบนเส้นผนัง'); render(); return; }
+      if (n.d > .4) { it.x = r2(n.q[0] + (it.x - n.q[0]) / n.d * .3); it.y = r2(n.q[1] + (it.y - n.q[1]) / n.d * .3); }
+      const keep = S.snaps.openings; S.snaps.openings = true; magnetItem(it); S.snaps.openings = keep;
+    }
+    if (type === 'talent') { const used = new Set(P().items.filter(i => i.cat === 'person').map(i => i.color)); it.color = PERSON_COLORS.find(c => !used.has(c)) || PERSON_COLORS[0]; it.label = String.fromCharCode(65 + P().items.filter(i => i.cat === 'person').length % 26); }
+    snap(); P().items.push(it); save();
+    if (!opening) setTool('select');
+    selectThing({ t: 'item', id: it.id });
   } else if (o.kind === 'text') {
     const t = prompt('ข้อความบนแปลน');
     if (t && t.trim()) { snap(); const d = { id: uid(), type: 'text', pts: [[r2(o.w[0]), r2(o.w[1])]], text: t.trim(), color: S.pen === PEN_COLORS[0] ? INK : S.pen }; P().draws.push(d); save(); setTool('select'); selectThing({ t: 'draw', id: d.id }); }
@@ -876,12 +915,19 @@ function fieldHTML(f, v) {
     case 'select': return `<label class="fld">${lab}<select data-k="${f.k}">${f.opts.map(o => { const [val, name] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(val)}"${String(val) === String(v) ? ' selected' : ''}>${esc(name)}</option>`; }).join('')}</select></label>`;
     case 'range': return `<label class="fld">${lab}<input type="range" data-k="${f.k}" data-unit="${f.unit || ''}" min="${f.min}" max="${f.max}" step="${f.step || 1}" value="${v ?? f.min}"></label>`;
     case 'textarea': return `<label class="fld">${lab}<textarea data-k="${f.k}" placeholder="${esc(f.ph || '')}">${esc(v)}</textarea></label>`;
+    case 'swatch': return `<div class="fld"><span>${f.label}</span><div class="swgrid" role="radiogroup" aria-label="${f.label}">${f.opts.map(c => `<button type="button" role="radio" aria-checked="${c === v}" aria-label="${f.label} ${c}" data-sw="${f.k}" data-v="${c}" class="${c === v ? 'on' : ''}" style="background:${c}"></button>`).join('')}</div></div>`;
     case 'check': return `<label class="fld chk"><input type="checkbox" data-k="${f.k}"${v ? ' checked' : ''}><span style="color:var(--text)">${f.label}</span></label>`;
     case 'color': return `<label class="fld">${lab}<input type="color" data-k="${f.k}" value="${esc(v || '#ffffff')}" style="height:40px;padding:4px"></label>`;
     default: return `<label class="fld">${lab}<input type="${f.type || 'text'}" data-k="${f.k}" value="${esc(v)}" ${f.type === 'number' ? `step="${f.step || 'any'}" inputmode="decimal"` : ''} placeholder="${esc(f.ph || '')}"></label>`;
   }
 }
 function bindFields(root, obj, onChange, undoable = true) {
+  $$('[data-sw]', root).forEach(b => b.onclick = () => {
+    if (undoable) snap();
+    obj[b.dataset.sw] = b.dataset.v;
+    $$(`[data-sw="${b.dataset.sw}"]`, root).forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', x === b); });
+    onChange && onChange(b.dataset.sw, b.dataset.v); save(); render();
+  });
   $$('[data-k]', root).forEach(el => {
     let snapped = false;
     const start = () => { if (!snapped && undoable) { snap(); snapped = true; } };
@@ -941,14 +987,14 @@ function inspectorFields(it) {
       { row: [{ k: 'sensor', label: 'เซนเซอร์', type: 'select', opts: Object.entries(SENSORS).map(([k, v]) => [k, v[0]]) }, { k: 'lens', label: 'เลนส์', type: 'number', unit: 'mm' }] },
       { k: 'reach', label: 'ระยะแสดง FOV', type: 'range', min: 1, max: 12, step: .5, unit: 'm' },
       { k: 'height', label: 'ความสูงกล้อง', type: 'number', unit: 'm', step: .1 },
-      { k: 'color', label: 'สีกล้อง', type: 'select', opts: CAM_COLORS.map((c, i) => [c, ['แดง', 'น้ำเงิน', 'เขียว', 'ม่วง', 'ส้ม', 'ฟ้า'][i]]) },
+      { k: 'color', label: 'สีกล้อง', type: 'swatch', opts: CAM_COLORS },
     );
   } else if (FRAME_TYPES.includes(it.type)) {
     const cats = it.type === 'diffusion' ? ['diff'] : it.type === 'bounce' ? ['bounce'] : it.type === 'net' ? ['net'] : it.type === 'flag' || it.type === 'neg' ? ['neg', 'net'] : ['diff', 'bounce', 'neg', 'net'];
     base.push({ k: 'label', label: 'ชื่อ / ป้าย', ph: 'เช่น Key diffusion' },
       { row: [{ k: 'size', label: 'ขนาดเฟรม (ฟุต / นิ้ว)', type: 'select', opts: FRAME_SIZES }, { k: 'fabric', label: 'ผ้า', type: 'select', opts: cats.flatMap(c => FABRICS[c]) }] });
   } else if (it.cat === 'person') {
-    base.push({ k: 'label', label: 'ชื่อ / บทบาท', ph: 'เช่น แขกรับเชิญ, Director' }, { k: 'color', label: 'สี', type: 'select', opts: PERSON_COLORS.map((c, i) => [c, ['เหลือง', 'แดง', 'น้ำเงิน', 'เขียว', 'ม่วง', 'เทา'][i]]) });
+    base.push({ k: 'label', label: 'ชื่อ / บทบาท', ph: 'เช่น แขกรับเชิญ, Director' }, { k: 'color', label: 'สี', type: 'swatch', opts: PERSON_COLORS });
   } else if (it.type === 'window') {
     base.push({ k: 'label', label: 'ชื่อ', ph: 'เช่น หน้าต่างทิศตะวันตก' }, { k: 'sun', label: 'แสดงแสงที่เข้ามาจากหน้าต่าง', type: 'check' }, { k: 'k', label: 'อุณหภูมิแสง', type: 'range', min: 2700, max: 7500, step: 100, unit: 'K', chips: true }, { row: [{ k: 'beam', label: 'มุมแสง', type: 'range', min: 30, max: 180, step: 5, unit: '°' }, { k: 'reach', label: 'ระยะ', type: 'range', min: 1, max: 10, step: .5, unit: 'm' }] });
   } else {
@@ -1105,10 +1151,11 @@ function renderSceneTab() {
 }
 
 // ---------- modals ----------
-function modal(html, { wide, onClose } = {}) {
+function modal(html, { wide, onClose, cls } = {}) {
   const back = document.createElement('div');
   back.className = 'mback';
-  back.innerHTML = `<div class="modal${wide ? ' wide' : ''}" role="dialog">${html}</div>`;
+  back.innerHTML = `<div class="modal${wide ? ' wide' : ''}${cls ? ' ' + cls : ''}" role="dialog">${html}</div>`;
+  if (cls) back.classList.add('mb-' + cls);
   document.body.appendChild(back);
   const m = back.firstChild;
   const close = () => { back.remove(); onClose && onClose(); };
@@ -1268,33 +1315,33 @@ function openKit() {
   draw();
 }
 
+const ROOMS = [
+  ['rect', 'สี่เหลี่ยม', 'M3 3h24v18H3z', (W, L) => [[0, 0], [W, 0], [W, L], [0, L]]],
+  ['L', 'ตัว L', 'M3 3h14v8h10v10H3z', (W, L) => [[0, 0], [W * .6, 0], [W * .6, L * .45], [W, L * .45], [W, L], [0, L]]],
+  ['U', 'ตัว U', 'M3 3h7v10h10V3h7v18H3z', (W, L) => [[0, 0], [W * .3, 0], [W * .3, L * .55], [W * .7, L * .55], [W * .7, 0], [W, 0], [W, L], [0, L]]],
+  ['T', 'ตัว T', 'M3 3h24v7h-8v11h-8V10H3z', (W, L) => [[0, 0], [W, 0], [W, L * .4], [W * .67, L * .4], [W * .67, L], [W * .33, L], [W * .33, L * .4], [0, L * .4]]],
+  ['hall', 'โถงยาว', 'M2 7h26v10H2z', (W, L) => [[0, 0], [W, 0], [W, L * .4], [0, L * .4]]],
+];
 function openRoom() {
-  const m = modal(`<h3>สร้างห้อง ${closeX}</h3>
-    <div class="note" style="margin-bottom:14px"><b style="color:var(--text)">สแกนห้องด้วย LiDAR:</b> เวอร์ชัน iOS จะใช้ Apple RoomPlan สแกนผนัง ประตู หน้าต่าง และเฟอร์นิเจอร์อัตโนมัติ ตอนนี้ในเว็บ ให้สแกนด้วยแอปที่ส่งออกแปลนเป็นภาพได้ (เช่น แอปสแกนห้องบน iPhone Pro) แล้วนำเข้าภาพด้านล่าง จากนั้นตั้งสเกลให้ตรงกับขนาดจริง</div>
-    <h4 style="margin-top:0">ห้องสี่เหลี่ยม</h4>
-    <div class="grid2">${fieldHTML({ k: 'w', label: 'กว้าง', type: 'number', unit: 'm', step: .1 }, 5)}${fieldHTML({ k: 'h', label: 'ยาว', type: 'number', unit: 'm', step: .1 }, 4)}</div>
-    <label class="fld chk"><input type="checkbox" id="rmReplace" checked><span style="color:var(--text)">แทนที่ผนังเดิม</span></label>
-    <div class="acts"><button class="btn primary" id="rmMake">สร้างห้อง</button></div>
-    <h4>นำเข้าแปลน / ภาพสแกน / ภาพถ่ายมุมบน</h4>
-    <div class="acts"><button class="btn" id="rmImg">เลือกภาพแปลน</button></div>`);
-  $('#rmMake', m).onclick = () => {
-    const w = parseFloat($('[data-k="w"]', m).value), h = parseFloat($('[data-k="h"]', m).value);
-    if (!(w > .5 && h > .5)) return toast('ใส่ขนาดห้องให้ถูกต้อง');
+  const m = modal(`<h3>ห้อง ${closeX}</h3>
+    <div class="roomgrid">${ROOMS.map(([k, n, d]) => `<button type="button" data-room="${k}" aria-label="${n}" title="${n}"><svg viewBox="0 0 30 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg><small>${n}</small></button>`).join('')}
+      <button type="button" data-room="img" aria-label="นำเข้าแปลน" title="นำเข้าแปลน / สแกน"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg><small>ภาพแปลน</small></button></div>
+    <div class="grid2" style="margin-top:12px">${fieldHTML({ k: 'w', label: 'กว้าง (m)', type: 'number', step: .1 }, 6)}${fieldHTML({ k: 'h', label: 'ยาว (m)', type: 'number', step: .1 }, 5)}</div>`, { cls: 'pop' });
+  $('.roomgrid', m).onclick = async e => {
+    const b = e.target.closest('[data-room]'); if (!b) return;
+    if (b.dataset.room === 'img') {
+      const f = await pickFile('image/*'); if (!f) return;
+      const img = await fileToJPEG(f, 2200, .85);
+      snap();
+      const w = 8, h = w * img.h / img.w, [cx, cy] = viewCenter();
+      P().bg = { ph: addPhoto(img.src), x: r2(cx - w / 2), y: r2(cy - h / 2), w, h: r2(h), op: .6 };
+      save(); m.close(); fitView(); renderPanel(); toast('ลากเส้นทับระยะที่รู้ขนาดเพื่อตั้งสเกล'); startCalib(); return;
+    }
+    const W = parseFloat($('[data-k="w"]', m).value) || 6, L = parseFloat($('[data-k="h"]', m).value) || 5;
+    const pts = ROOMS.find(r => r[0] === b.dataset.room)[3](W, L).map(([x, y]) => [r2(x - W / 2), r2(y - L / 2)]);
     snap();
-    if ($('#rmReplace', m).checked) P().walls = [];
-    const x0 = r2(-w / 2), y0 = r2(-h / 2), x1 = r2(w / 2), y1 = r2(h / 2);
-    [[[x0, y0], [x1, y0]], [[x1, y0], [x1, y1]], [[x1, y1], [x0, y1]], [[x0, y1], [x0, y0]]].forEach(([a, b]) => P().walls.push({ id: uid(), a, b, t: .12 }));
-    save(); m.close(); fitView();
-  };
-  $('#rmImg', m).onclick = async () => {
-    const f = await pickFile('image/*'); if (!f) return;
-    const img = await fileToJPEG(f, 2200, .85);
-    snap();
-    const w = 8, h = w * img.h / img.w, [cx, cy] = viewCenter();
-    P().bg = { ph: addPhoto(img.src), x: r2(cx - w / 2), y: r2(cy - h / 2), w, h: r2(h), op: .6 };
-    save(); m.close(); fitView(); renderPanel();
-    toast('นำเข้าแล้ว ลากเส้นทับระยะที่รู้ขนาดจริงเพื่อตั้งสเกล');
-    startCalib();
+    P().walls = pts.map((a, i) => ({ id: uid(), a, b: pts[(i + 1) % pts.length], t: .12 }));
+    save(); m.close(); fitView(); if (P().items.length) toast('เปลี่ยนห้องแล้ว · ย้อนกลับได้');
   };
 }
 function startCalib() { selectThing(null); setTool('calib'); }
@@ -1471,7 +1518,6 @@ $('#btnImport').onclick = async () => {
 // ---------- demo ----------
 function demoProject() {
   const p = newProject('สัมภาษณ์ · Founder Talk', 'Studio Hoya', new Date().toISOString().slice(0, 10));
-  p.wallStyle = 'block';
   const sc = p.scenes[0];
   Object.assign(sc, { number: '1', name: 'สัมภาษณ์ – ห้องนั่งเล่น', location: 'บ้านลูกค้า · ห้องนั่งเล่น', time: 'กลางวัน', notes: 'โทนอบอุ่น ธรรมชาติ ให้แสงหน้าต่างเป็นแสงหลักของพื้นหลัง ปิดไฟเพดานทั้งหมด' });
   S.scene = sc;
