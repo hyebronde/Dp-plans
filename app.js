@@ -270,6 +270,48 @@ function findSel() {
   const { t, id } = S.sel;
   return t === 'item' ? getItem(id) : t === 'wall' ? P().walls.find(w => w.id === id) : P().draws.find(d => d.id === id);
 }
+// ---------- layers (Photoshop-style: eye + lock per group and per item) ----------
+const LAYERS = [
+  ['draw', 'เส้น · ข้อความ', 'M4 20l4-1L19 8l-3-3L5 16zM14 7l3 3'],
+  ['person', 'คน', 'M12 11a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0'],
+  ['camera', 'กล้อง', 'M3 10h11v9H3zM14 13l6-3v9l-6-3M4 6.5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0M9 6.5a2.5 2.5 0 105 0 2.5 2.5 0 10-5 0'],
+  ['light', 'ไฟ', 'M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0012 3z'],
+  ['grip', 'กริป', 'M4 4h16v12H4zM12 16v5M8 21h8'],
+  ['set', 'ฉาก · พร็อพ', 'M5 11V8a2 2 0 012-2h10a2 2 0 012 2v3M3 11h18v5H3zM5 16v3M19 16v3'],
+  ['room', 'ห้อง · ประตู · หน้าต่าง', 'M3 3h18v18H3zM3 12h7M14 12h7M14 12v9'],
+  ['bg', 'ภาพแปลน', 'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M15.5 9a1.5 1.5 0 100-.01'],
+];
+const layerOf = it => it.type === 'door' || it.type === 'window' ? 'room' : it.cat;
+const lyr = (p, k) => (p.layers && p.layers[k]) || {};
+const itemHidden = (p, it) => !!(lyr(p, layerOf(it)).hide || it.hide);
+const itemLocked = (p, it) => !!(lyr(p, layerOf(it)).lock || it.lock);
+const drawHidden = (p, d) => !!(lyr(p, 'draw').hide || d.hide);
+const drawLocked = (p, d) => !!(lyr(p, 'draw').lock || d.lock);
+function setLayer(p, k, f, v) {
+  p.layers = p.layers || {};
+  const L = p.layers[k] = { ...(p.layers[k] || {}) };
+  if (v) L[f] = true; else delete L[f];
+  if (!L.hide && !L.lock) delete p.layers[k];
+}
+// what the canvas & exports should draw: hidden layers / items left out
+function visiblePlan(p) {
+  if (!p.layers && !p.items.some(i => i.hide) && !p.draws.some(d => d.hide)) return p;
+  const v = Object.create(Object.getPrototypeOf(p));
+  Object.assign(v, p);
+  v.items = p.items.filter(it => !itemHidden(p, it));
+  v.walls = lyr(p, 'room').hide ? [] : p.walls;
+  v.draws = p.draws.filter(d => !drawHidden(p, d));
+  if (lyr(p, 'bg').hide) v.bg = null;
+  return v;
+}
+const TOOL_LAYER = { wall: 'room', room: 'room', door: 'room', window: 'room', light: 'light', camera: 'camera', person: 'person', arrow: 'draw', pen: 'draw', dim: 'draw', text: 'draw' };
+// adding to a locked layer is refused; adding to a hidden one shows it again
+function layerGate(k, quiet) {
+  const p = P(), L = lyr(p, k);
+  if (L.lock) { if (!quiet) toast('เลเยอร์ ' + LAYERS.find(l => l[0] === k)[1] + ' ถูกล็อกอยู่'); return false; }
+  if (L.hide) { setLayer(p, k, 'hide', false); if (S.tab === 'layers') renderPanel(); }
+  return true;
+}
 const cams = (sc = S.scene) => sc.plan.items.filter(i => i.type === 'camera');
 const lights = (sc = S.scene) => sc.plan.items.filter(i => i.cat === 'light');
 const hfov = it => 2 * deg(Math.atan((SENSORS[it.sensor] || SENSORS.ff)[1] / (2 * Math.max(4, +it.lens || 35))));
@@ -388,7 +430,7 @@ function pill(x, y, s, size, bg, fg) {
 }
 function planSVG(sc, o) {
   applyAims(sc);
-  const p = sc.plan, px = o.px, edit = !!o.edit;
+  const p0 = sc.plan, p = visiblePlan(p0), px = o.px, edit = !!o.edit;
   let defs = PEN_COLORS.map(c => `<marker id="ar${c.slice(1)}" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="3.6" markerHeight="3.6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`).join('');
   let out = '';
   if (o.grid) {
@@ -427,27 +469,29 @@ function planSVG(sc, o) {
     const def = LIBMAP[it.type]; if (!def) continue;
     const hitR = Math.max(itemR(it), 20 * px);
     let hit = '';
-    if (edit) {
+    const lk = edit && itemLocked(p0, it);
+    if (edit && !lk) {
       if (FRAME_TYPES.includes(it.type)) { const [a, b2] = frameDims(it.size), tw = it.type === 'overhead' ? b2 : Math.max(.3, 28 * px); hit = `<rect x="${-tw / 2}" y="${-a / 2}" width="${tw}" height="${a}" fill="transparent"/>`; }
       else hit = `<circle r="${hitR / (it.s || 1)}" fill="transparent"/>`;
     }
-    out += `<g data-id="${it.id}" transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0}) scale(${it.s || 1})">${hit}${SHAPES[it.type](it)}</g>`;
+    out += `<g ${lk ? 'data-lk="1"' : `data-id="${it.id}"`} transform="translate(${it.x} ${it.y}) rotate(${it.rot || 0}) scale(${it.s || 1})">${hit}${SHAPES[it.type](it)}</g>`;
   }
   // drawings
   for (const d of p.draws) {
-    if (d.type === 'text') { out += `<g data-draw="${d.id}">${txt(d.pts[0][0], d.pts[0][1], d.text, .26 * (d.s || 1), `fill="${d.color || INK}" font-weight="600"`)}</g>`; continue; }
+    const dk = edit && drawLocked(p0, d) ? 'data-lk="1"' : `data-draw="${d.id}"`;
+    if (d.type === 'text') { out += `<g ${dk}>${txt(d.pts[0][0], d.pts[0][1], d.text, .26 * (d.s || 1), `fill="${d.color || INK}" font-weight="600"`)}</g>`; continue; }
     if (d.type === 'dim') {
       const [a, b] = d.pts, len = Math.hypot(b[0] - a[0], b[1] - a[1]), ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
       const nx = -Math.sin(ang) * .08, ny = Math.cos(ang) * .08, mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
       let ta = deg(ang); if (ta > 90 || ta < -90) ta += 180;
-      out += `<g data-draw="${d.id}"><path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}M${a[0] + nx} ${a[1] + ny}L${a[0] - nx} ${a[1] - ny}M${b[0] + nx} ${b[1] + ny}L${b[0] - nx} ${b[1] - ny}" stroke="#6b6860" stroke-width=".02" stroke-dasharray=".07 .04"/>${txt(mx, my - .06, len.toFixed(2) + ' m', .2, `transform="rotate(${ta.toFixed(1)} ${mx} ${my})" fill="#55524b" font-weight="600"`)}</g>`;
+      out += `<g ${dk}><path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}M${a[0] + nx} ${a[1] + ny}L${a[0] - nx} ${a[1] - ny}M${b[0] + nx} ${b[1] + ny}L${b[0] - nx} ${b[1] - ny}" stroke="#6b6860" stroke-width=".02" stroke-dasharray=".07 .04"/>${txt(mx, my - .06, len.toFixed(2) + ' m', .2, `transform="rotate(${ta.toFixed(1)} ${mx} ${my})" fill="#55524b" font-weight="600"`)}</g>`;
       continue;
     }
     const c = d.color || PEN_COLORS[0];
-    out += `<g data-draw="${d.id}"><path d="${smoothPath(d.pts)}" fill="none" stroke="transparent" stroke-width="${Math.max(.2, 22 * px)}"/><path d="${smoothPath(d.pts)}" fill="none" stroke="${c}" stroke-width="${d.type === 'arrow' ? .045 : .03}" stroke-linecap="round" stroke-linejoin="round" ${d.type === 'arrow' ? `marker-end="url(#ar${c.slice(1)})"` : ''}/></g>`;
+    out += `<g ${dk}><path d="${smoothPath(d.pts)}" fill="none" stroke="transparent" stroke-width="${Math.max(.2, 22 * px)}"/><path d="${smoothPath(d.pts)}" fill="none" stroke="${c}" stroke-width="${d.type === 'arrow' ? .045 : .03}" stroke-linecap="round" stroke-linejoin="round" ${d.type === 'arrow' ? `marker-end="url(#ar${c.slice(1)})"` : ''}/></g>`;
   }
   // labels: DP diagram style (role, model in a dark pill, then K · W), placed so they don't overlap
-  if (o.labels) out += placeLabels(p, px);
+  if (o.labels) { out += placeLabels(p, px); if (p !== p0) Object.defineProperty(p0, '_labels', { value: p._labels, writable: true, configurable: true, enumerable: false }); }
   // edit overlays: selection + previews
   if (edit) {
     const ac = '#7B5CE0', sw = 2 * px;
@@ -467,7 +511,7 @@ function planSVG(sc, o) {
       const xs = s.pts.map(p => p[0]), ys = s.pts.map(p => p[1]), pad = .15;
       out += `<rect x="${Math.min(...xs) - pad}" y="${Math.min(...ys) - pad - (s.type === 'text' ? .2 : 0)}" width="${Math.max(...xs) - Math.min(...xs) + pad * 2}" height="${Math.max(...ys) - Math.min(...ys) + pad * 2 + (s.type === 'text' ? .2 : 0)}" fill="none" stroke="${ac}" stroke-width="${sw}" stroke-dasharray="${6 * px} ${4 * px}" rx="${6 * px}"/>`;
     }
-    for (const w of p.walls) out += `<line data-wall="${w.id}" x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="transparent" stroke-width="${Math.max(w.t || .12, 22 * px)}"/>`;
+    if (!lyr(p0, 'room').lock) for (const w of p.walls) out += `<line data-wall="${w.id}" x1="${w.a[0]}" y1="${w.a[1]}" x2="${w.b[0]}" y2="${w.b[1]}" stroke="transparent" stroke-width="${Math.max(w.t || .12, 22 * px)}"/>`;
     const pv = S.preview;
     if (pv) {
       if (pv.type === 'wall' || pv.type === 'calib' || pv.type === 'dim') {
@@ -830,6 +874,7 @@ svg.addEventListener('pointerdown', e => {
   const w = toWorld(e.clientX, e.clientY), t = e.target;
   const start = { cx: e.clientX, cy: e.clientY, w };
   const tool = S.tool;
+  if (TOOL_LAYER[tool] && !layerGate(TOOL_LAYER[tool])) { op = { kind: 'pan', v: { ...S.view }, ...start }; return; }
   if (tool === 'select') {
     const h = t.closest('[data-handle]'), g = t.closest('[data-id]'), wl = t.closest('[data-wall]'), dr = t.closest('[data-draw]');
     if (h) {
@@ -848,6 +893,7 @@ svg.addEventListener('pointerdown', e => {
       selectThing({ t: 'wall', id: wa.id });
       op = { kind: 'moveWall', orig: { a: [...wa.a], b: [...wa.b] }, ...start };
     } else {
+      if (t.closest('[data-lk]')) toast('ล็อกอยู่ · ปลดได้ที่แท็บเลเยอร์');
       if (S.sel) selectThing(null);
       if (S.activeShot) { S.activeShot = null; renderPanel(); }
       op = { kind: 'pan', v: { ...S.view }, ...start };
@@ -1041,7 +1087,7 @@ function renderQuick() {
   if (!it) { q.hidden = true; return; }
   const def = LIBMAP[it.type];
   const head = (ico, color, title, sub, extra = '') => `<div class="qhead" data-qdrag><span class="qico" style="color:${color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ico}"/></svg></span><div class="qt"><b>${esc(title)}</b><small>${esc(sub)}</small></div>${extra}</div>`;
-  const tail = `<div class="qrow">${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}${qbtn('more', ICQ.more, 'รายละเอียดทั้งหมด')}</div>`;
+  const tail = `<div class="qrow">${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}${qbtn('lock', LY_LOCK, 'ล็อก')}${qbtn('more', ICQ.more, 'รายละเอียดทั้งหมด')}</div>`;
   let h = '';
   if (it.cat === 'light') {
     const kv = it.mode === 'rgb' ? 'RGB' : effK(it);
@@ -1050,12 +1096,12 @@ function renderQuick() {
       + (it.mode === 'bicolor' ? `<input class="qk" type="range" min="2700" max="6500" step="100" value="${it.k}" data-q="k" aria-label="อุณหภูมิสี">` : it.mode === 'rgb' ? `<input class="qcol" type="color" value="${it.color || '#ff7a1a'}" data-q="color" aria-label="สี">` : '')
       + `<input class="qd" type="range" min="0" max="100" value="${it.dim ?? 100}" data-q="dim" aria-label="Dimmer">`
       + `<div class="qrow">${qbtn('gel', ICQ.gel, 'เจล: ' + (it.gel || '—'), it.gel && it.gel !== '—')}${it.beam < 359 ? qbtn('beam', ICQ.beam, 'มุมลำแสง ' + it.beam + '°') : ''}${qbtn('aim', ICQ.aim, it.aim ? 'เลิกเล็ง' : 'เล็งไปที่คนใกล้สุด', !!it.aim)}${qbtn('more', ICQ.more, 'รายละเอียดทั้งหมด')}</div>`
-      + `<div class="qrow">${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}</div>`;
+      + `<div class="qrow">${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}${qbtn('lock', LY_LOCK, 'ล็อก')}</div>`;
   } else if (it.type === 'camera') {
     h = head(ICQ.cam, it.color, it.label || 'Cam', it.body || 'กล้อง', `<span class="qfov">FOV ${hfov(it).toFixed(0)}°</span>`)
       + `<div class="qchips">${[18, 24, 35, 50, 85, 135].map(l => `<button type="button" data-ql="${l}" class="${+it.lens === l ? 'on' : ''}">${l}</button>`).join('')}</div>`
       + `<div class="qrow">${qbtn('aim', ICQ.aim, it.aim ? 'เลิกเล็ง' : 'เล็งไปที่คนใกล้สุด', !!it.aim)}${qbtn('shot', 'M12 5v14M5 12h14', 'เพิ่มช็อตจากกล้องนี้')}${qbtn('rot', ICQ.rot, 'หมุน 90°')}${qbtn('more', ICQ.more, 'รายละเอียดทั้งหมด')}</div>`
-      + `<div class="qrow">${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}</div>`;
+      + `<div class="qrow">${qbtn('dup', ICQ.dup, 'ทำซ้ำ')}${qbtn('del', ICQ.del, 'ลบ')}${qbtn('lock', LY_LOCK, 'ล็อก')}</div>`;
   } else if (it.cat === 'person') {
     h = head(ICQ.person, it.color === '#FFFFFF' ? '#2B2B2E' : it.color, it.label || 'คน', def.name)
       + `<div class="swgrid">${PERSON_COLORS.map(c => `<button type="button" data-qc="${c}" class="${c === it.color ? 'on' : ''}" style="background:${c}" aria-label="สี ${c}"></button>`).join('')}</div>` + tail;
@@ -1091,6 +1137,7 @@ function renderQuick() {
     if (a === 'dup') return duplicateSel();
     if (a === 'more') { S.fullInspect = true; renderQuick(); renderPanel(); openPanel(); return; }
     if (a === 'shot') return addShot(it.id);
+    if (a === 'lock') { it.lock = true; save(); toast('ล็อกแล้ว · ปลดได้ที่แท็บเลเยอร์'); return selectThing(null); }
     snap();
     if (a === 'rot') { it.rot = normDeg((it.rot || 0) + 90); delete it.aim; }
     if (a === 'gel') { it.gel = QGELS[(QGELS.indexOf(it.gel || '—') + 1) % QGELS.length]; toast('เจล: ' + it.gel); }
@@ -1228,6 +1275,7 @@ function renderPanel() {
   if (S.tab === 'shots') return renderShots();
   if (S.tab === 'lights') return renderLights();
   if (S.tab === 'refs') return renderRefs();
+  if (S.tab === 'layers') return renderLayers();
   return renderSceneTab();
 }
 function syncInspectorPos() {
@@ -1389,6 +1437,43 @@ function renderLights() {
   $$('[data-pick]', pbody).forEach(b => b.onclick = () => selectThing({ t: 'item', id: b.dataset.pick }));
   $('#addLight').onclick = () => openLibrary('brands');
   $('#editKit').onclick = openKit;
+}
+const LY_EYE = 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 9a3 3 0 100 6 3 3 0 000-6z';
+const LY_EYE_OFF = 'M3 3l18 18M10.6 5.1A10 10 0 0112 5c6.5 0 10 7 10 7a17 17 0 01-3 3.9M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.7 9.7 0 005.4-1.6M9.9 9.9a3 3 0 004.2 4.2';
+const LY_LOCK = 'M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 017 0v3';
+const LY_UNLOCK = 'M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 016.8-1.2';
+const lyBtn = (attr, on, kind, label) => `<button type="button" class="lyb${on ? ' on' : ''} ${kind}" ${attr} aria-label="${label}" aria-pressed="${on}" title="${label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${kind === 'eye' ? (on ? LY_EYE_OFF : LY_EYE) : (on ? LY_LOCK : LY_UNLOCK)}"/></svg></button>`;
+S.lyOpen = S.lyOpen || {};
+function layerMembers(p, k) {
+  if (k === 'draw') return p.draws.map(d => ({ d, id: d.id, name: d.type === 'text' ? '“' + d.text + '”' : d.type === 'dim' ? 'ระยะ ' + Math.hypot(d.pts[1][0] - d.pts[0][0], d.pts[1][1] - d.pts[0][1]).toFixed(2) + ' m' : d.type === 'arrow' ? 'ลูกศร' : 'เส้นวาด', color: d.color || INK }));
+  if (k === 'bg') return [];
+  const items = p.items.filter(it => layerOf(it) === k).map(it => ({ it, id: it.id, name: itemName(it), color: it.cat === 'light' ? lightColor(it) : it.color || '#8b8d98' }));
+  return items.reverse(); // top of the list = drawn last, like Photoshop
+}
+function renderLayers() {
+  const p = P();
+  const rows = LAYERS.filter(([k]) => k !== 'bg' || p.bg).map(([k, name, ico]) => {
+    const L = lyr(p, k), mem = layerMembers(p, k), cnt = k === 'room' ? p.walls.length + mem.length : mem.length, open = S.lyOpen[k] && mem.length;
+    const sub = open ? `<div class="lysub">${mem.map(m => {
+      const o = m.it || m.d, hid = L.hide || o.hide, lk = L.lock || o.lock;
+      return `<div class="lyr sub${hid ? ' hid' : ''}${S.sel && S.sel.id === m.id ? ' sel' : ''}"><button type="button" class="lyname" data-lysel="${m.id}"${lk || hid ? ' disabled' : ''}>${m.it ? `<span class="lyth">${miniIcon(m.it.type, m.it)}</span>` : `<span class="sw" style="background:${m.color}"></span>`}<b>${esc(m.name)}</b></button>${lyBtn(`data-ih="${m.id}"`, !!o.hide, 'eye', o.hide ? 'แสดง' : 'ซ่อน')}${lyBtn(`data-il="${m.id}"`, !!o.lock, 'lock', o.lock ? 'ปลดล็อก' : 'ล็อก')}</div>`;
+    }).join('')}</div>` : '';
+    return `<div class="lyr${L.hide ? ' hid' : ''}${L.lock ? ' lkd' : ''}"><button type="button" class="lyname" data-lyx="${k}"${mem.length ? '' : ' disabled'}><i class="lychev${open ? ' open' : ''}${mem.length ? '' : ' none'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></i><span class="lyico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ico}"/></svg></span><b>${name}</b><small>${cnt || ''}</small></button>${lyBtn(`data-lyh="${k}"`, !!L.hide, 'eye', L.hide ? 'แสดงเลเยอร์' : 'ซ่อนเลเยอร์')}${k === 'bg' ? '<span class="lyb ph"></span>' : lyBtn(`data-lyl="${k}"`, !!L.lock, 'lock', L.lock ? 'ปลดล็อกเลเยอร์' : 'ล็อกเลเยอร์')}</div>${sub}`;
+  }).join('');
+  const any = p.layers && Object.keys(p.layers).length;
+  pbody.innerHTML = `<h3>เลเยอร์</h3><div class="lylist">${rows}</div>
+    <p class="lyhelp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${LY_LOCK}"/></svg>ล็อกแล้วแตะไม่โดน · ที่ซ่อนจะไม่ออกใน PDF / ภาพ</p>
+    ${any ? '<div class="acts"><button class="btn sm" id="lyReset">แสดงและปลดล็อกทั้งหมด</button></div>' : ''}`;
+  const find = id => p.items.find(i => i.id === id) || p.draws.find(d => d.id === id);
+  const done = () => { save(); if (S.sel) { const s = findSel(); const blocked = s && (S.sel.t === 'item' ? itemHidden(p, s) || itemLocked(p, s) : S.sel.t === 'draw' ? drawHidden(p, s) || drawLocked(p, s) : lyr(p, 'room').hide || lyr(p, 'room').lock); if (blocked) { S.sel = null; S.fullInspect = false; } } renderPanel(); render(); renderQuick(); };
+  $$('[data-lyx]', pbody).forEach(b => b.onclick = () => { S.lyOpen[b.dataset.lyx] = !S.lyOpen[b.dataset.lyx]; renderPanel(); });
+  $$('[data-lyh]', pbody).forEach(b => b.onclick = () => { setLayer(p, b.dataset.lyh, 'hide', !lyr(p, b.dataset.lyh).hide); done(); });
+  $$('[data-lyl]', pbody).forEach(b => b.onclick = () => { setLayer(p, b.dataset.lyl, 'lock', !lyr(p, b.dataset.lyl).lock); done(); });
+  $$('[data-ih]', pbody).forEach(b => b.onclick = () => { const o = find(b.dataset.ih); if (o.hide) delete o.hide; else o.hide = true; done(); });
+  $$('[data-il]', pbody).forEach(b => b.onclick = () => { const o = find(b.dataset.il); if (o.lock) delete o.lock; else o.lock = true; done(); });
+  $$('[data-lysel]', pbody).forEach(b => b.onclick = () => { const id = b.dataset.lysel; selectThing({ t: p.items.some(i => i.id === id) ? 'item' : 'draw', id }); S.tab = 'layers'; renderPanel(); });
+  const rs = $('#lyReset', pbody);
+  if (rs) rs.onclick = () => { delete p.layers; p.items.forEach(i => { delete i.hide; delete i.lock; }); p.draws.forEach(d => { delete d.hide; delete d.lock; }); done(); };
 }
 function renderSceneTab() {
   const sc = S.scene, bg = sc.plan.bg;
@@ -1567,6 +1652,7 @@ function openLibrary(tab = 'brands') {
       const kd = S.kit.find(z => z.id === k.dataset.kit);
       it = makeItem(kd.type, x, y, { model: kd.model, watt: kd.watt, mode: kd.mode, k: kd.mode === 'daylight' ? 5600 : LIBMAP[kd.type].d.k });
     }
+    if (!layerGate(layerOf(it))) return;
     snap(); P().items.push(it); save();
     m.close(); setTool('select'); selectThing({ t: 'item', id: it.id });
   };

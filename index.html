@@ -501,6 +501,35 @@ html.q-compact .qbig span:first-child{font-size:30px}
 html.q-compact .qbig em{font-size:18px}
 html.q-compact .qico{width:34px;height:34px}
 html.q-compact .qb{height:40px}
+
+/* layers panel */
+.lylist{display:flex;flex-direction:column;gap:6px}
+.lyr{display:flex;align-items:center;gap:4px;background:#E8E9EC;box-shadow:var(--up-s);border-radius:16px;padding:4px 4px 4px 2px;min-height:44px}
+.lyr.sub{margin-left:18px;box-shadow:none;background:transparent;border-radius:12px;min-height:38px;padding:2px 4px}
+.lyr.sub.sel{background:#fff8;box-shadow:inset 0 0 0 1.5px #FF7A1A55}
+.lyr.hid .lyname{opacity:.42}
+.lyname{flex:1;min-width:0;display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:6px 4px;text-align:left;color:#1C1C1F;font:inherit}
+.lyname:disabled{cursor:default;color:#1C1C1F}
+.lyname b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.lyr.sub .lyname b{font-weight:500;font-size:13.5px}
+.lyname small{margin-left:auto;color:#8a8c92;font-size:12px;padding-right:2px;flex:none}
+.lychev{width:18px;height:18px;flex:none;color:#8a8c92;transition:transform .15s}
+.lychev svg{width:18px;height:18px;display:block}
+.lychev.open{transform:rotate(90deg)}
+.lychev.none{visibility:hidden}
+.lyico{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;background:#E8E9EC;box-shadow:var(--in);color:#45474c}
+.lyico svg{width:17px;height:17px}
+.lyr.lkd .lyico{color:#2F6BFF}
+.lyth{width:26px;height:26px;flex:none;display:grid;place-items:center}
+.lyth svg{width:26px;height:26px}
+.lyr.sub .sw{width:12px;height:12px;border-radius:50%;flex:none;margin:0 7px}
+.lyb{width:36px;height:36px;flex:none;border:0;border-radius:12px;background:transparent;display:grid;place-items:center;color:#9a9ca2;padding:0}
+.lyb svg{width:19px;height:19px}
+.lyb.eye.on{color:#FF7A1A;background:#E8E9EC;box-shadow:var(--in)}
+.lyb.lock.on{color:#2F6BFF;background:#E8E9EC;box-shadow:var(--in)}
+.lyb.ph{pointer-events:none}
+.lyhelp{display:flex;align-items:center;gap:6px;color:#8a8c92;font-size:12px;margin:12px 4px 4px}
+.lyhelp svg{width:14px;height:14px;flex:none}
 </style>
 </head>
 <body>
@@ -535,7 +564,7 @@ html.q-compact .qb{height:40px}
     </div>
     <aside id="panel" class="min">
       <div class="ptabs"><span class="grab"></span>
-        <button data-tab="shots"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h11v9H3zM14 13l6-3v9l-6-3"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="11.5" cy="6.5" r="2.5"/></svg>ช็อต</button><button data-tab="lights"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0012 3z"/></svg>ไฟ</button><button data-tab="refs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>Ref</button><button data-tab="scene"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></svg>ซีน</button>
+        <button data-tab="shots"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h11v9H3zM14 13l6-3v9l-6-3"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="11.5" cy="6.5" r="2.5"/></svg>ช็อต</button><button data-tab="lights"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0012 3z"/></svg>ไฟ</button><button data-tab="refs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 16l5-5 4 4 3-3 6 6"/></svg>Ref</button><button data-tab="scene"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16v11H4zM4 9l2.5-5h13L17 9M9.5 4L7 9M15 4l-2.5 5"/></svg>ซีน</button><button data-tab="layers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5zM3 12.5l9 5 9-5M3 17l9 5 9-5"/></svg>เลเยอร์</button>
       </div>
       <div class="pbody"></div>
     </aside>
